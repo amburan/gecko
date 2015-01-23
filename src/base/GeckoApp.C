@@ -2,6 +2,8 @@
 #include "Moose.h"
 #include "AppFactory.h"
 #include "ModulesApp.h"
+#include "MultiscaleDirichletBC.h"
+#include "LammpsUserObject.h"
 
 template<>
 InputParameters validParams<GeckoApp>()
@@ -40,6 +42,8 @@ GeckoApp::registerApps()
 void
 GeckoApp::registerObjects(Factory & factory)
 {
+  registerBoundaryCondition(MultiscaleDirichletBC);
+  registerUserObject(LammpsUserObject);
 }
 
 void
