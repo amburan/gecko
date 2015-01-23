@@ -8,25 +8,29 @@
 /*                                                              */
 /****************************************************************/
 
-#ifndef GECKOAPP_H
-#define GECKOAPP_H
+#ifndef MULTISCALEFLUXBC_H
+#define MULTISCALEFLUXBC_H
 
-#include "MooseApp.h"
+#include "FluxBC.h"
 
-class GeckoApp;
+class MultiscaleFluxBC;
 
 template<>
-InputParameters validParams<GeckoApp>();
+InputParameters validParams<MultiscaleFluxBC>();
 
-class GeckoApp : public MooseApp
+/**
+ *
+ */
+class MultiscaleFluxBC : public FluxBC
 {
 public:
-  GeckoApp(const std::string & name, InputParameters parameters);
-  virtual ~GeckoApp();
+  MultiscaleFluxBC(const std::string & name, InputParameters parameters);
+  virtual ~MultiscaleFluxBC();
 
-  static void registerApps();
-  static void registerObjects(Factory & factory);
-  static void associateSyntax(Syntax & syntax, ActionFactory & action_factory);
+protected:
+  virtual RealGradient computeQpFluxResidual();
+  virtual RealGradient computeQpFluxJacobian();
 };
 
-#endif /* GECKOAPP_H */
+
+#endif /* MULTISCALEFLUXBC_H */
