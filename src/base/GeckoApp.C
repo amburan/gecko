@@ -1,10 +1,10 @@
-#include "StorkApp.h"
+#include "GeckoApp.h"
 #include "Moose.h"
 #include "AppFactory.h"
 #include "ModulesApp.h"
 
 template<>
-InputParameters validParams<StorkApp>()
+InputParameters validParams<GeckoApp>()
 {
   InputParameters params = validParams<MooseApp>();
 
@@ -13,36 +13,36 @@ InputParameters validParams<StorkApp>()
   return params;
 }
 
-StorkApp::StorkApp(const std::string & name, InputParameters parameters) :
+GeckoApp::GeckoApp(const std::string & name, InputParameters parameters) :
     MooseApp(name, parameters)
 {
   srand(processor_id());
 
   Moose::registerObjects(_factory);
   ModulesApp::registerObjects(_factory);
-  StorkApp::registerObjects(_factory);
+  GeckoApp::registerObjects(_factory);
 
   Moose::associateSyntax(_syntax, _action_factory);
   ModulesApp::associateSyntax(_syntax, _action_factory);
-  StorkApp::associateSyntax(_syntax, _action_factory);
+  GeckoApp::associateSyntax(_syntax, _action_factory);
 }
 
-StorkApp::~StorkApp()
+GeckoApp::~GeckoApp()
 {
 }
 
 void
-StorkApp::registerApps()
+GeckoApp::registerApps()
 {
-  registerApp(StorkApp);
+  registerApp(GeckoApp);
 }
 
 void
-StorkApp::registerObjects(Factory & factory)
+GeckoApp::registerObjects(Factory & factory)
 {
 }
 
 void
-StorkApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
+GeckoApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
 {
 }
