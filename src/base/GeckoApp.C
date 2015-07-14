@@ -31,6 +31,7 @@ GeckoApp::~GeckoApp()
 {
 }
 
+extern "C" void GeckoApp__registerApps() { GeckoApp::registerApps(); }
 void
 GeckoApp::registerApps()
 {
