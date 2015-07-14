@@ -90,7 +90,7 @@
 [UserObjects]
   [./lammps_uo]
     type = LammpsUserObject
-    lammpsInput = /Users/sthomas/lammps/examples/COUPLE/simple/in.lj
+    lammpsInput = ../../../../lammps/examples/USER/atc/thermal/in.bar1d_flux
   [../]
 []
 
