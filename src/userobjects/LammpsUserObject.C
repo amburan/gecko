@@ -24,14 +24,14 @@ template<>
 InputParameters validParams<LammpsUserObject>()
 {
   InputParameters params = validParams<GeneralUserObject>();
-  params.addRequiredParam<std::string>("lammpsInput", "A full file path to the lammps input file");
+  params.addRequiredParam<FileName>("lammpsInput", "A full file path to the lammps input file");
   return params;
 }
 
 
 LammpsUserObject::LammpsUserObject(const std::string & name, InputParameters params) :
     GeneralUserObject(name, params),
-    _inputFilePath(getParam<std::string>("lammpsInput"))
+    _inputFilePath(getParam<FileName>("lammpsInput"))
 {
   _callCount = 0;
 }
@@ -47,7 +47,7 @@ LammpsUserObject::execute()
   //SubdomainID curr_subdomain = _current_elem->subdomain_id();
   //printf("*********CALLING LAMMPS %d **Subdomain: %d**n_nodes: %d*********\n",_callCount,curr_subdomain,_current_elem->n_nodes());
   printf("*********CALLING LAMMPS %d ***********\n",_callCount);
-  //callLAMMPS();
+  callLAMMPS();
 }
 
 Real
