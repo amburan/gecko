@@ -11,7 +11,7 @@
 #ifndef LAMMPSUSEROBJECT_H
 #define LAMMPSUSEROBJECT_H
 
-#include "GeneralUserObject.h"
+#include "MDUserObject.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -23,6 +23,9 @@
 #include "atom.h"
 #include "library.h"
 
+using namespace LAMMPS_NS;
+
+
 class LammpsUserObject;
 
 template<>
@@ -30,37 +33,54 @@ InputParameters validParams<LammpsUserObject>();
 
 
 /**
- * Demonstration of user-data object
+ * MDUserObject for coupling MOOSE with LAMMPS molecular dynamics simulation environment.
  */
-class LammpsUserObject : public GeneralUserObject
+class LammpsUserObject : public MDUserObject
 {
 public:
   LammpsUserObject(const std::string & name, InputParameters params);
   virtual ~LammpsUserObject();
-
   /**
    * Called before execute() is ever called so that data can be cleared.
    */
-  virtual void initialize(){}
-
+  virtual void initialize();
   /**
    * Called when this object needs to compute something.
    */
   virtual void execute();
-  //virtual void threadJoin(const UserObject & y);
-  virtual void finalize() {}
 
+  virtual void finalize();
   /**
-   * A function that does something
-   */
-  Real callLAMMPS() const;
-
-  Real getNodalAtomicTemperature() const;
+  * Gets the Atomic temperature for the given node based on nodal coordinates
+  */
+  virtual Real getNodalAtomicTemperature(const Node & refNode) const;
 
 
 protected:
-  /// path to lammps input file
-  std::string _inputFilePath;
+  /**
+   * The funcion that calls the LAMMPS AtC code for performing MD simulation prescribed in _inputMDFilePath.
+   */
+  Real callLAMMPS() const;
+  /**
+  * path to lammps input file for performing molecular mechanics
+  */
+  std::string _inputEqFilePath;
+  /**
+  * path to lammps input file for performing molecular dynamics
+  */
+  std::string _inputMDFilePath;
+  /**
+  * MPI rank of current LammpsUserObject
+  */
+  int _mpiRank;
+  /**
+  * MPI Communicator responsible for coordinating LAMMPS processing
+  */
+  MPI_Comm lammpsMPIComm;
+  /**
+  * LAMMPS object which lives throught the life of the Gecko object
+  */
+  LAMMPS *lmp;
 
 };
 

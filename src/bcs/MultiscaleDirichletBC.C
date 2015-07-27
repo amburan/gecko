@@ -33,7 +33,6 @@ MultiscaleDirichletBC::~MultiscaleDirichletBC()
 Real
 MultiscaleDirichletBC::computeQpResidual()
 {
-  _value=_lammps_userobject.getNodalAtomicTemperature();
-  //printf("*********setting multiscaleBC _u: %f current node : %d ***********\n",_u[_qp] , _current_node->id());
+  _value = _lammps_userobject.getNodalAtomicTemperature(*_current_node);
   return _u[_qp] - _value;
 }
