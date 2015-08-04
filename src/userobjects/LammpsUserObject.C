@@ -20,14 +20,18 @@ InputParameters validParams<LammpsUserObject>()
   InputParameters params = validParams<MDUserObject>();
   params.addRequiredParam<FileName>("lammpsEquilibriationInput", "A full file path to the lammps input file for performing equilibriation");
   params.addRequiredParam<FileName>("lammpsMDInput", "A full file path to the lammps input file for molecular dynamics");
+  params.addRequiredParam<PostProcessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.")
+  params.addRequiredParam<PostProcessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.")
   return params;
 }
 
 
 LammpsUserObject::LammpsUserObject(const std::string & name, InputParameters params) :
-    MDUserObject(name, params),
+    MDUserObject(name, params)
     _inputEqFilePath(getParam<FileName>("lammpsEquilibriationInput")),
     _inputMDFilePath(getParam<FileName>("lammpsMDInput")),
+    _leftDownScaleValuePostprocessor(getPostProcessor<PostProcessor>("leftDownScalingTemperature")),
+    _rightDownScaleValuePostprocessor(getPostProcessor<PostProcessor>("rightDownScalingTemperature")),
     _mpiRank(0)
 {
   _callCount = 0;
@@ -168,39 +172,36 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
 Real
 LammpsUserObject::callLAMMPS() const
 {
-  FILE *fp;
-  // open LAMMPS input script
+  int nLbcLine,nRbcLine,nRunLine;
+  std::string lbcLine;
+  std::string rbcLine;
+  std::string runLine;
+
+
   if (_mpiRank == 0)
   {
-    fp = fopen(_inputMDFilePath.c_str(),"r");
-    if (fp == NULL)
-    {
-      printf("ERROR: Could not open LAMMPS input script\n");
-      MPI_Abort(MPI_COMM_WORLD,1);
-    }
+      Real lbcVal = _leftDownScaleValuePostprocessor.getValue();
+      Real rbcVal = _rightDownScaleValuePostprocessor.getValue();
+      lbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(lbcVal);
+      rbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(rbcVal);
+      runLine = "run 		100";
+      nLbcLine = strlen(lbcLine) + 1;
+      nRbcLine = strlen(rbcLine) + 1;
+      nRunLine = strlen(runLine) + 1;
   }
 
-  int n;
-  char line[1024];
-  while (1)
-  {
-    if (_mpiRank == 0)
-    {
-      if (fgets(line,1024,fp) == NULL)
-        n = 0;
-      else
-        n = strlen(line) + 1;
-      if (n == 0)
-        fclose(fp);
-    }
+  MPI_Bcast(&nLbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(&nRbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(&nRunLine,1,MPI_INT,0,MPI_COMM_WORLD);
 
-    MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
-    if (n == 0)
-      break;
-    MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(lbcLine,nLbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(rbcLine,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(runLine,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
 
-    lmp->input->one(line);
-  }
+  lmp->input->one(lbcLine);
+  lmp->input->one(rbcLine);
+  lmp->input->one(runLine);
+
 
 #ifdef PRINT_NODAL_INFO_MATRIX
   if (_mpiRank==0)

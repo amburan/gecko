@@ -35,7 +35,8 @@ InputParameters validParams<LammpsUserObject>();
 /**
  * MDUserObject for coupling MOOSE with LAMMPS molecular dynamics simulation environment.
  */
-class LammpsUserObject : public MDUserObject
+class LammpsUserObject :
+  public MDUserObject
 {
 public:
   LammpsUserObject(const std::string & name, InputParameters params);
@@ -81,7 +82,22 @@ protected:
   * LAMMPS object which lives throught the life of the Gecko object
   */
   LAMMPS *lmp;
-
+  /**
+  * side set name for the left Dirichlet Boundary condition for FEA to MD downscaling
+  */
+  std::string _leftDownScalingBCName;
+  /**
+  * side set name for the right Dirichlet Boundary condition for FEA to MD downscaling
+  */
+  std::string _rightDownScalingBCName;
+  /**
+  * Postprocessor object for getting temperature value for leftDownScalingBC
+  */
+  const PostprocessorValue & _leftDownScaleValuePostprocessor_value;
+  /**
+  * Postprocessor object for getting temperature value for rightDownScalingBC
+  */
+  const PostprocessorValue & _rightDownScaleValuePostprocessor_value;
 };
 
 
