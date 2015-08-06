@@ -20,19 +20,19 @@ InputParameters validParams<LammpsUserObject>()
   InputParameters params = validParams<MDUserObject>();
   params.addRequiredParam<FileName>("lammpsEquilibriationInput", "A full file path to the lammps input file for performing equilibriation");
   params.addRequiredParam<FileName>("lammpsMDInput", "A full file path to the lammps input file for molecular dynamics");
-  params.addRequiredParam<PostProcessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.")
-  params.addRequiredParam<PostProcessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.")
+  params.addRequiredParam<PostprocessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.");
+  params.addRequiredParam<PostprocessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.");
   return params;
 }
 
 
 LammpsUserObject::LammpsUserObject(const std::string & name, InputParameters params) :
-    MDUserObject(name, params)
+    MDUserObject(name, params),
     _inputEqFilePath(getParam<FileName>("lammpsEquilibriationInput")),
     _inputMDFilePath(getParam<FileName>("lammpsMDInput")),
-    _leftDownScaleValuePostprocessor(getPostProcessor<PostProcessor>("leftDownScalingTemperature")),
-    _rightDownScaleValuePostprocessor(getPostProcessor<PostProcessor>("rightDownScalingTemperature")),
-    _mpiRank(0)
+    _mpiRank(0),
+    _leftDownScaleValuePostprocessor(getPostprocessorValue("leftDownScalingTemperature")),
+    _rightDownScaleValuePostprocessor(getPostprocessorValue("rightDownScalingTemperature"))
 {
   _callCount = 0;
 }
@@ -176,31 +176,36 @@ LammpsUserObject::callLAMMPS() const
   std::string lbcLine;
   std::string rbcLine;
   std::string runLine;
-
+  void * lbc_line;
+  void * rbc_line;
+  void * run_line;
 
   if (_mpiRank == 0)
   {
-      Real lbcVal = _leftDownScaleValuePostprocessor.getValue();
-      Real rbcVal = _rightDownScaleValuePostprocessor.getValue();
+      Real lbcVal = _leftDownScaleValuePostprocessor;
+      Real rbcVal = _rightDownScaleValuePostprocessor;
       lbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(lbcVal);
       rbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(rbcVal);
       runLine = "run 		100";
-      nLbcLine = strlen(lbcLine) + 1;
-      nRbcLine = strlen(rbcLine) + 1;
-      nRunLine = strlen(runLine) + 1;
+      nLbcLine = lbcLine.length() + 1;
+      nRbcLine = rbcLine.length() + 1;
+      nRunLine = runLine.length() + 1;
+      lbc_line = (void*)lbcLine.c_str();
+      rbc_line = (void*)rbcLine.c_str();
+      run_line = (void*)runLine.c_str();
   }
 
   MPI_Bcast(&nLbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&nRbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&nRunLine,1,MPI_INT,0,MPI_COMM_WORLD);
 
-  MPI_Bcast(lbcLine,nLbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
-  MPI_Bcast(rbcLine,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
-  MPI_Bcast(runLine,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(lbc_line,nLbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(rbc_line,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
+  MPI_Bcast(run_line,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
 
-  lmp->input->one(lbcLine);
-  lmp->input->one(rbcLine);
-  lmp->input->one(runLine);
+  lmp->input->one(lbcLine.c_str());
+  lmp->input->one(rbcLine.c_str());
+  lmp->input->one(runLine.c_str());
 
 
 #ifdef PRINT_NODAL_INFO_MATRIX

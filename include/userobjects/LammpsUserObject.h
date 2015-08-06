@@ -93,11 +93,11 @@ protected:
   /**
   * Postprocessor object for getting temperature value for leftDownScalingBC
   */
-  const PostprocessorValue & _leftDownScaleValuePostprocessor_value;
+  const PostprocessorValue & _leftDownScaleValuePostprocessor;
   /**
   * Postprocessor object for getting temperature value for rightDownScalingBC
   */
-  const PostprocessorValue & _rightDownScaleValuePostprocessor_value;
+  const PostprocessorValue & _rightDownScaleValuePostprocessor;
 };
 
 
