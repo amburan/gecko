@@ -10,6 +10,13 @@
 
 #include "LammpsUserObject.h"
 //#define PRINT_NODAL_INFO_MATRIX
+template <typename T>
+std::string ToString(T val)
+{
+    std::stringstream stream;
+    stream << val;
+    return stream.str();
+}
 
 int _callCount;
 bool _isInitialized=false;
@@ -184,8 +191,10 @@ LammpsUserObject::callLAMMPS() const
   {
       Real lbcVal = _leftDownScaleValuePostprocessor;
       Real rbcVal = _rightDownScaleValuePostprocessor;
-      lbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(lbcVal);
-      rbcLine = "fix_modify      AtC  fix temperature lbc " + std::to_string(rbcVal);
+      std::string lbc_name = ToString(getParam<PostprocessorName>("leftDownScalingTemperature"));
+      std::string rbc_name = ToString(getParam<PostprocessorName>("rightDownScalingTemperature"));
+      lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(lbcVal);
+      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(rbcVal);
       runLine = "run 		100";
       nLbcLine = lbcLine.length() + 1;
       nRbcLine = rbcLine.length() + 1;

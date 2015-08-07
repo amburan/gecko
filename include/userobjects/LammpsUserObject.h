@@ -17,6 +17,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "mpi.h"
+#include <sstream>
 
 #include "lammps.h"         // these are LAMMPS include files
 #include "input.h"
