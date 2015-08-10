@@ -198,7 +198,7 @@ LammpsUserObject::callLAMMPS() const
       std::string lbc_name = ToString(getParam<PostprocessorName>("leftDownScalingTemperature"));
       std::string rbc_name = ToString(getParam<PostprocessorName>("rightDownScalingTemperature"));
       lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
-      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
+      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(_rightDownScaleValuePostprocessor);
       runLine = "run 		" + ToString(_numMDTimeSteps);
       nLbcLine = lbcLine.length() + 1;
       nRbcLine = rbcLine.length() + 1;
