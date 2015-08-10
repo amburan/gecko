@@ -29,6 +29,7 @@ InputParameters validParams<LammpsUserObject>()
   params.addRequiredParam<FileName>("lammpsMDInput", "A full file path to the lammps input file for molecular dynamics");
   params.addRequiredParam<PostprocessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.");
   params.addRequiredParam<PostprocessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.");
+  params.addRequiredParam<Real>("LammpsTimeSteps","The number of timesteps to run in LAMMPS. Please note that this is the number of timesteps for the MD simulation only and not the equilibriation.");
   return params;
 }
 
@@ -39,14 +40,15 @@ LammpsUserObject::LammpsUserObject(const std::string & name, InputParameters par
     _inputMDFilePath(getParam<FileName>("lammpsMDInput")),
     _mpiRank(0),
     _leftDownScaleValuePostprocessor(getPostprocessorValue("leftDownScalingTemperature")),
-    _rightDownScaleValuePostprocessor(getPostprocessorValue("rightDownScalingTemperature"))
+    _rightDownScaleValuePostprocessor(getPostprocessorValue("rightDownScalingTemperature")),
+    _numMDTimeSteps(getParam<Real>("LammpsTimeSteps"))
 {
   _callCount = 0;
 }
 
 LammpsUserObject::~LammpsUserObject()
 {
-  delete lmp;
+  //delete lmp;
 }
 
 /**
@@ -59,6 +61,7 @@ LammpsUserObject::initialize()
   {
     _isInitialized=true;
     printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_callCount);
+/*
     FILE *fp;
     int nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
@@ -72,6 +75,7 @@ LammpsUserObject::initialize()
 
       MPI_Abort(MPI_COMM_WORLD,1);
     }
+
 
     int lammps=0;
     if (_mpiRank < nprocs_lammps)
@@ -116,6 +120,7 @@ LammpsUserObject::initialize()
       if (lammps == 1)
         lmp->input->one(line);
     }
+*/
   }
 }
 
@@ -137,6 +142,7 @@ Real
 LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
 {
   Real nodalTempVal = 0;
+  /*
   double nodalCoordinateTolerance = 0.0;//may need to modify this based on element size percent.
   if (_callCount>0)
   {
@@ -172,7 +178,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
       }
     }
   }
-
+*/
   return nodalTempVal;
 }
 
@@ -189,19 +195,18 @@ LammpsUserObject::callLAMMPS() const
 
   if (_mpiRank == 0)
   {
-      Real lbcVal = _leftDownScaleValuePostprocessor;
-      Real rbcVal = _rightDownScaleValuePostprocessor;
       std::string lbc_name = ToString(getParam<PostprocessorName>("leftDownScalingTemperature"));
       std::string rbc_name = ToString(getParam<PostprocessorName>("rightDownScalingTemperature"));
-      lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(lbcVal);
-      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(rbcVal);
-      runLine = "run 		100";
+      lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
+      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
+      runLine = "run 		" + ToString(_numMDTimeSteps);
       nLbcLine = lbcLine.length() + 1;
       nRbcLine = rbcLine.length() + 1;
       nRunLine = runLine.length() + 1;
       lbc_line = (void*)lbcLine.c_str();
       rbc_line = (void*)rbcLine.c_str();
       run_line = (void*)runLine.c_str();
+      printf("%s\n%s\n",lbcLine.c_str(),rbcLine.c_str());
   }
 
   MPI_Bcast(&nLbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -212,10 +217,11 @@ LammpsUserObject::callLAMMPS() const
   MPI_Bcast(rbc_line,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
   MPI_Bcast(run_line,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
 
+/*
   lmp->input->one(lbcLine.c_str());
   lmp->input->one(rbcLine.c_str());
   lmp->input->one(runLine.c_str());
-
+*/
 
 #ifdef PRINT_NODAL_INFO_MATRIX
   if (_mpiRank==0)

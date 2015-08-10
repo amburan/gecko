@@ -18,14 +18,14 @@
 #include "string.h"
 #include "mpi.h"
 #include <sstream>
-
+/*
 #include "lammps.h"         // these are LAMMPS include files
 #include "input.h"
 #include "atom.h"
 #include "library.h"
 
 using namespace LAMMPS_NS;
-
+*/
 
 class LammpsUserObject;
 
@@ -82,7 +82,7 @@ protected:
   /**
   * LAMMPS object which lives throught the life of the Gecko object
   */
-  LAMMPS *lmp;
+  //LAMMPS *lmp;
   /**
   * side set name for the left Dirichlet Boundary condition for FEA to MD downscaling
   */
@@ -99,6 +99,10 @@ protected:
   * Postprocessor object for getting temperature value for rightDownScalingBC
   */
   const PostprocessorValue & _rightDownScaleValuePostprocessor;
+  /**
+  * Number of timesteps to execute MD simulation.
+  */
+  Real _numMDTimeSteps;
 };
 
 

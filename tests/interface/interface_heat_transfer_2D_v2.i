@@ -1,14 +1,13 @@
 [Mesh]
-  type = GeneratedMesh
+  type = FileMesh
+  file = msh.e
   dim = 2
-  nx = 16
-  xmax = 16
   block_id = 1
   block_name = atc_region
 []
 
 [MeshModifiers]
-  active = 'atc_region atc_nodeset rbc_sideset lbc_sideset '
+  active = 'rbc_sideset lbc_sideset atc_nodeset'
   [./rbc_nodeset]
     type = AddExtraNodeset
     new_boundary = rbc_nodeset
@@ -21,7 +20,7 @@
   [../]
   [./lbc_sideset]
     type = SideSetsAroundSubdomain
-    new_boundary = lbc_ss
+    new_boundary = lbc_sideset
     block = 1
     normal = '-1 0 0'
   [../]
@@ -69,7 +68,7 @@
     type = DirichletBC
     variable = temp
     boundary = left
-    value = 50
+    value = 15
   [../]
   [./right_DC]
     type = DirichletBC
@@ -86,7 +85,7 @@
 []
 
 [Materials]
-  active = 'steel dummy_mat'
+  active = 'argon dummy_mat'
   [./hcm]
     type = HeatConductionMaterial
     block = 0
@@ -99,28 +98,31 @@
     specific_heat = 1
     thermal_conductivity = 1
   [../]
-  [./steel]
-    type = GenericConstantMaterial
-    block = 0
-    prop_names = 'thermal_conductivity specific_heat density'
-    prop_values = '180000 100.466 8000' # W/m*K, J/kg-K, kg/m^3 @ 296K
-  [../]
   [./dummy_mat]
     type = GenericConstantMaterial
     block = 1
   [../]
+  [./argon]
+    type = GenericConstantMaterial
+    block = 0
+    prop_names = 'thermal_conductivity specific_heat density'
+    prop_values = '0.01772 520.33 .000001784' # W/m*K, J/kg-K, kg/m^3 @ 296K
+  [../]
 []
 
 [Postprocessors]
+  active = 'lbc rbc'
   [./rbc]
     type = SideAverageValue
     variable = temp
-    boundary = 6
+    boundary = 5
+    execute_on = linear
   [../]
   [./lbc]
     type = SideAverageValue
     variable = temp
-    boundary = 5
+    boundary = 7
+    execute_on = linear
   [../]
   [./lbc_nodal_val]
     type = NodalVariableValue
@@ -137,6 +139,7 @@
     boundary = '5 6'
     leftDownScalingTemperature = lbc
     rightDownScalingTemperature = rbc
+    LammpsTimeSteps = 200
   [../]
 []
 
@@ -146,7 +149,7 @@
 
 [Executioner]
   type = Transient
-  num_steps = 9
+  num_steps = 200
   solve_type = PJFNK
   petsc_options_iname = '-pc_type -pc_hypre_type'
   petsc_options_value = 'hypre boomeramg'
@@ -158,3 +161,4 @@
     output_initial = true
   [../]
 []
+
