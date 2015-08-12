@@ -48,7 +48,7 @@ LammpsUserObject::LammpsUserObject(const std::string & name, InputParameters par
 
 LammpsUserObject::~LammpsUserObject()
 {
-  //delete lmp;
+  delete lmp;
 }
 
 /**
@@ -61,7 +61,7 @@ LammpsUserObject::initialize()
   {
     _isInitialized=true;
     printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_callCount);
-/*
+
     FILE *fp;
     int nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
@@ -120,7 +120,7 @@ LammpsUserObject::initialize()
       if (lammps == 1)
         lmp->input->one(line);
     }
-*/
+
   }
 }
 
@@ -142,7 +142,7 @@ Real
 LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
 {
   Real nodalTempVal = 0;
-  /*
+
   double nodalCoordinateTolerance = 0.0;//may need to modify this based on element size percent.
   if (_callCount>0)
   {
@@ -178,7 +178,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
       }
     }
   }
-*/
+
   return nodalTempVal;
 }
 
@@ -217,11 +217,11 @@ LammpsUserObject::callLAMMPS() const
   MPI_Bcast(rbc_line,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
   MPI_Bcast(run_line,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
 
-/*
+
   lmp->input->one(lbcLine.c_str());
   lmp->input->one(rbcLine.c_str());
   lmp->input->one(runLine.c_str());
-*/
+
 
 #ifdef PRINT_NODAL_INFO_MATRIX
   if (_mpiRank==0)
