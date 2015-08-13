@@ -25,7 +25,7 @@ InputParameters validParams<MultiscaleDirichletBC>();
 class MultiscaleDirichletBC : public NodalBC
 {
 public:
-  MultiscaleDirichletBC(InputParameters parameters);
+  MultiscaleDirichletBC(const InputParameters & parameters);
   virtual ~MultiscaleDirichletBC();
 
 protected:

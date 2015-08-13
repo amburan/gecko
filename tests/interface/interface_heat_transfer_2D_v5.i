@@ -46,6 +46,7 @@
 []
 
 [BCs]
+  #active = 'left_DC right_DC'
   [./left_DC]
     type = DirichletBC
     variable = temp
@@ -95,13 +96,13 @@
 [Postprocessors]
   active = 'lbc rbc'
   [./rbc]
-    type = SideAverageValue
+    type = AverageNodalVariableValue
     variable = temp
     boundary = 6
     execute_on = 'timestep_begin timestep_end'
   [../]
   [./lbc]
-    type = SideAverageValue
+    type = AverageNodalVariableValue
     variable = temp
     boundary = 5
     execute_on = 'timestep_begin timestep_end'
@@ -114,11 +115,12 @@
 []
 
 [UserObjects]
+  #active = ''
   [./lammps_uo]
     type = LammpsUserObject
-    lammpsMDInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_md
-    lammpsEquilibriationInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq
-    boundary = '5 6'
+    lammpsMDInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_md'
+    lammpsEquilibriationInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq'
+    #boundary = '5 6' # This is not used, run your application with --error
     leftDownScalingTemperature = lbc
     rightDownScalingTemperature = rbc
     LammpsTimeSteps = 200
@@ -144,4 +146,3 @@
     output_initial = true
   [../]
 []
-

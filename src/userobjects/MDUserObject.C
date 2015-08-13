@@ -18,8 +18,8 @@ InputParameters validParams<MDUserObject>()
 }
 
 
-MDUserObject::MDUserObject(InputParameters params) :
-    GeneralUserObject(params)
+MDUserObject::MDUserObject(const InputParameters & parameters) :
+    GeneralUserObject(parameters)
 {
 }
 
