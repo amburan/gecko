@@ -67,9 +67,6 @@ protected:
   /// path to lammps input file for performing molecular mechanics
   std::string _inputEqFilePath;
 
-  /// path to lammps input file for performing molecular dynamics
-  std::string _inputMDFilePath;
-
   /// MPI rank of current LammpsUserObject
   int _mpiRank;
 

@@ -118,7 +118,6 @@
   #active = ''
   [./lammps_uo]
     type = LammpsUserObject
-    lammpsMDInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_md'
     lammpsEquilibriationInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq'
     #boundary = '5 6' # This is not used, run your application with --error
     leftDownScalingTemperature = lbc

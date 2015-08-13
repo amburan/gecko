@@ -23,7 +23,6 @@ InputParameters validParams<LammpsUserObject>()
 {
   InputParameters params = validParams<MDUserObject>();
   params.addRequiredParam<FileName>("lammpsEquilibriationInput", "A full file path to the lammps input file for performing equilibriation");
-  params.addRequiredParam<FileName>("lammpsMDInput", "A full file path to the lammps input file for molecular dynamics");
   params.addRequiredParam<PostprocessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.");
   params.addRequiredParam<PostprocessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.");
   params.addRequiredParam<Real>("LammpsTimeSteps","The number of timesteps to run in LAMMPS. Please note that this is the number of timesteps for the MD simulation only and not the equilibriation.");
@@ -34,7 +33,6 @@ InputParameters validParams<LammpsUserObject>()
 LammpsUserObject::LammpsUserObject(const InputParameters & parameters) :
     MDUserObject(parameters),
     _inputEqFilePath(getParam<FileName>("lammpsEquilibriationInput")),
-    _inputMDFilePath(getParam<FileName>("lammpsMDInput")),
     _mpiRank(0),
     _leftDownScaleValuePostprocessor(getPostprocessorValue("leftDownScalingTemperature")),
     _rightDownScaleValuePostprocessor(getPostprocessorValue("rightDownScalingTemperature")),
