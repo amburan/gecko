@@ -21,7 +21,7 @@ InputParameters validParams<GeckoApp>();
 class GeckoApp : public MooseApp
 {
 public:
-  GeckoApp(const std::string & name, InputParameters parameters);
+  GeckoApp(InputParameters parameters);
   virtual ~GeckoApp();
 
   static void registerApps();

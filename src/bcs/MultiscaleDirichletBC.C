@@ -19,8 +19,8 @@ InputParameters validParams<MultiscaleDirichletBC>()
 }
 
 
-MultiscaleDirichletBC::MultiscaleDirichletBC(const std::string & name, InputParameters parameters) :
-  NodalBC(name, parameters),
+MultiscaleDirichletBC::MultiscaleDirichletBC(InputParameters parameters) :
+  NodalBC(parameters),
   _lammps_userobject(getUserObject<LammpsUserObject>("lammps_userobject")),
   _value(0)
 {

@@ -25,7 +25,7 @@ InputParameters validParams<MultiscaleDirichletBC>();
 class MultiscaleDirichletBC : public NodalBC
 {
 public:
-  MultiscaleDirichletBC(const std::string & name, InputParameters parameters);
+  MultiscaleDirichletBC(InputParameters parameters);
   virtual ~MultiscaleDirichletBC();
 
 protected:
@@ -34,7 +34,7 @@ protected:
 
 private:
 
-  
+
   /**
    * A member reference that will hold onto a Lammps UserObject
    * of type LammpsUserObject for us to be able to query

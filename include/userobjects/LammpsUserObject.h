@@ -40,7 +40,7 @@ class LammpsUserObject :
   public MDUserObject
 {
 public:
-  LammpsUserObject(const std::string & name, InputParameters params);
+  LammpsUserObject(InputParameters params);
   virtual ~LammpsUserObject();
   /**
    * Called before execute() is ever called so that data can be cleared.

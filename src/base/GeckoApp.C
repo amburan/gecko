@@ -15,8 +15,8 @@ InputParameters validParams<GeckoApp>()
   return params;
 }
 
-GeckoApp::GeckoApp(const std::string & name, InputParameters parameters) :
-    MooseApp(name, parameters)
+GeckoApp::GeckoApp(InputParameters parameters) :
+    MooseApp(parameters)
 {
   srand(processor_id());
 

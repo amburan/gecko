@@ -24,7 +24,7 @@ InputParameters validParams<MultiscaleFluxBC>();
 class MultiscaleFluxBC : public FluxBC
 {
 public:
-  MultiscaleFluxBC(const std::string & name, InputParameters parameters);
+  MultiscaleFluxBC(InputParameters parameters);
   virtual ~MultiscaleFluxBC();
 
 protected:

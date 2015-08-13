@@ -19,8 +19,8 @@ InputParameters validParams<MultiscaleFluxBC>()
   return params;
 }
 
-MultiscaleFluxBC::MultiscaleFluxBC(const std::string & name, InputParameters parameters) :
-    FluxBC(name, parameters)
+MultiscaleFluxBC::MultiscaleFluxBC(InputParameters parameters) :
+    FluxBC(parameters)
 {
 }
 
@@ -39,4 +39,3 @@ MultiscaleFluxBC::computeQpFluxJacobian()
 {
   return -_grad_phi[_j][_qp];
 }
-
