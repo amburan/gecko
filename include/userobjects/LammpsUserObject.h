@@ -63,46 +63,45 @@ protected:
    * The funcion that calls the LAMMPS AtC code for performing MD simulation prescribed in _inputMDFilePath.
    */
   Real callLAMMPS() const;
-  /**
-  * path to lammps input file for performing molecular mechanics
-  */
+
+  /// path to lammps input file for performing molecular mechanics
   std::string _inputEqFilePath;
-  /**
-  * path to lammps input file for performing molecular dynamics
-  */
+
+  /// path to lammps input file for performing molecular dynamics
   std::string _inputMDFilePath;
-  /**
-  * MPI rank of current LammpsUserObject
-  */
+
+  /// MPI rank of current LammpsUserObject
   int _mpiRank;
-  /**
-  * MPI Communicator responsible for coordinating LAMMPS processing
-  */
+
+  /// MPI Communicator responsible for coordinating LAMMPS processing
   MPI_Comm lammpsMPIComm;
-  /**
-  * LAMMPS object which lives throught the life of the Gecko object
-  */
-  LAMMPS *lmp;
-  /**
-  * side set name for the left Dirichlet Boundary condition for FEA to MD downscaling
-  */
+
+  /// side set name for the left Dirichlet Boundary condition for FEA to MD downscaling
   std::string _leftDownScalingBCName;
-  /**
-  * side set name for the right Dirichlet Boundary condition for FEA to MD downscaling
-  */
+
+  /// side set name for the right Dirichlet Boundary condition for FEA to MD downscaling
   std::string _rightDownScalingBCName;
-  /**
-  * Postprocessor object for getting temperature value for leftDownScalingBC
-  */
+
+  /// Postprocessor object for getting temperature value for leftDownScalingBC
   const PostprocessorValue & _leftDownScaleValuePostprocessor;
-  /**
-  * Postprocessor object for getting temperature value for rightDownScalingBC
-  */
+
+  /// Postprocessor object for getting temperature value for rightDownScalingBC
   const PostprocessorValue & _rightDownScaleValuePostprocessor;
-  /**
-  * Number of timesteps to execute MD simulation.
-  */
+
+  /// Number of timesteps to execute MD simulation.
   Real _numMDTimeSteps;
+
+private:
+
+  /// LAMMPS object which lives throught the life of the Gecko object
+  LAMMPS * _lmp;
+
+  /// True when lammps is initialized
+  bool _lammps_initialized;
+
+  /// Number of calls to lammps
+  unsigned int _lammps_calls;
+
 };
 
 

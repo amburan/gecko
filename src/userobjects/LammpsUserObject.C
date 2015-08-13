@@ -18,9 +18,6 @@ std::string ToString(T val)
     return stream.str();
 }
 
-int _callCount;
-bool _isInitialized=false;
-
 template<>
 InputParameters validParams<LammpsUserObject>()
 {
@@ -41,14 +38,16 @@ LammpsUserObject::LammpsUserObject(InputParameters params) :
     _mpiRank(0),
     _leftDownScaleValuePostprocessor(getPostprocessorValue("leftDownScalingTemperature")),
     _rightDownScaleValuePostprocessor(getPostprocessorValue("rightDownScalingTemperature")),
-    _numMDTimeSteps(getParam<Real>("LammpsTimeSteps"))
+    _numMDTimeSteps(getParam<Real>("LammpsTimeSteps")),
+    _lmp(NULL),
+    _lammps_initialized(false),
+    _lammps_calls(0)
 {
-  _callCount = 0;
 }
 
 LammpsUserObject::~LammpsUserObject()
 {
-  delete lmp;
+  delete _lmp;
 }
 
 /**
@@ -57,10 +56,9 @@ LammpsUserObject::~LammpsUserObject()
 void
 LammpsUserObject::initialize()
 {
-  if (!_isInitialized)
+  if (!_lammps_initialized)
   {
-    _isInitialized=true;
-    printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_callCount);
+    printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_lammps_calls);
 
     FILE *fp;
     int nprocs;
@@ -97,7 +95,11 @@ LammpsUserObject::initialize()
     }
 
     if (lammps == 1)
-      lmp = new LAMMPS(0,NULL,lammpsMPIComm);
+    {
+      if (_lmp)
+        delete _lmp; // avoids potential memory leak
+      _lmp = new LAMMPS(0,NULL,lammpsMPIComm);
+    }
 
     int n;
     char line[1024];
@@ -118,17 +120,17 @@ LammpsUserObject::initialize()
         break;
       MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
       if (lammps == 1)
-        lmp->input->one(line);
+        _lmp->input->one(line);
     }
-
+    _lammps_initialized=true;
   }
 }
 
 void
 LammpsUserObject::execute()
 {
-  _callCount++;
-  printf("*********CALLING LAMMPS MD %d ***********\n",_callCount);
+  _lammps_calls++;
+  printf("*********CALLING LAMMPS MD %d ***********\n",_lammps_calls);
   callLAMMPS();
 }
 
@@ -144,7 +146,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
   Real nodalTempVal = 0;
 
   double nodalCoordinateTolerance = 0.0;//may need to modify this based on element size percent.
-  if (_callCount>0)
+  if (_lammps_calls>0)
   {
     int style=0;//0 for global data, 1 for per-atom data, 2 for local data
     int type=2;//0 for scalar, 1 for vector, 2 for array, 3 for full array as double **
@@ -152,17 +154,17 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
     int ncols;
     char * iD= "AtC";
 
-    lammps_extract_fix_arraysize(lmp, iD, style, &nrows, &ncols);
+    lammps_extract_fix_arraysize(_lmp, iD, style, &nrows, &ncols);
 
     for (int nodeId=0;nodeId<nrows;nodeId++)
     {
-      double *dptr = (double *) lammps_extract_fix(lmp,iD,style,type,nodeId,1);
+      double *dptr = (double *) lammps_extract_fix(_lmp,iD,style,type,nodeId,1);
       double x = *dptr;
       lammps_free(dptr);
-      dptr = (double *) lammps_extract_fix(lmp,iD,style,type,nodeId,2);
+      dptr = (double *) lammps_extract_fix(_lmp,iD,style,type,nodeId,2);
       double y = *dptr;
       lammps_free(dptr);
-      dptr = (double *) lammps_extract_fix(lmp,iD,style,type,nodeId,3);
+      dptr = (double *) lammps_extract_fix(_lmp,iD,style,type,nodeId,3);
       double z = *dptr;
       lammps_free(dptr);
       Point nodalCoords = Point(x,y,z);
@@ -171,7 +173,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
 
       if (found)
       {
-        dptr = (double *) lammps_extract_fix(lmp,iD,style,type,nodeId,4);
+        dptr = (double *) lammps_extract_fix(_lmp,iD,style,type,nodeId,4);
         nodalTempVal = *dptr;
         lammps_free(dptr);
         break;
@@ -218,9 +220,9 @@ LammpsUserObject::callLAMMPS() const
   MPI_Bcast(run_line,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
 
 
-  lmp->input->one(lbcLine.c_str());
-  lmp->input->one(rbcLine.c_str());
-  lmp->input->one(runLine.c_str());
+  _lmp->input->one(lbcLine.c_str());
+  _lmp->input->one(rbcLine.c_str());
+  _lmp->input->one(runLine.c_str());
 
 
 #ifdef PRINT_NODAL_INFO_MATRIX
@@ -232,13 +234,13 @@ LammpsUserObject::callLAMMPS() const
     int ncols;
     char * iD= "AtC";
 
-    lammps_extract_fix_arraysize(lmp, iD, style, &nrows, &ncols);
+    lammps_extract_fix_arraysize(_lmp, iD, style, &nrows, &ncols);
 
     for (int nodeId=0;nodeId<nrows;nodeId++)
     {
       for (int fieldIndex=0;fieldIndex<ncols;fieldIndex++)
       {
-        double *dptr = (double *) lammps_extract_fix(lmp,iD,style,type,nodeId,fieldIndex);
+        double *dptr = (double *) lammps_extract_fix(_lmp,iD,style,type,nodeId,fieldIndex);
         double dValue = *dptr;
         printf("%f\t",dValue);
         lammps_free(dptr);
