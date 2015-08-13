@@ -1,9 +1,16 @@
+
+// Main application
 #include "GeckoApp.h"
 #include "Moose.h"
 #include "AppFactory.h"
-#include "ModulesApp.h"
+
+// Gecko incluces
 #include "MultiscaleDirichletBC.h"
 #include "LammpsUserObject.h"
+
+// Modules
+#include "HeatConductionApp.h"
+
 
 template<>
 InputParameters validParams<GeckoApp>()
@@ -18,14 +25,12 @@ InputParameters validParams<GeckoApp>()
 GeckoApp::GeckoApp(InputParameters parameters) :
     MooseApp(parameters)
 {
-  srand(processor_id());
-
   Moose::registerObjects(_factory);
-  ModulesApp::registerObjects(_factory);
+  HeatConductionApp::registerObjects(_factory);
   GeckoApp::registerObjects(_factory);
 
   Moose::associateSyntax(_syntax, _action_factory);
-  ModulesApp::associateSyntax(_syntax, _action_factory);
+  HeatConductionApp::associateSyntax(_syntax, _action_factory);
   GeckoApp::associateSyntax(_syntax, _action_factory);
 }
 
