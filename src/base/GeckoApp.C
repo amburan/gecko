@@ -52,6 +52,6 @@ GeckoApp::registerObjects(Factory & factory)
 }
 
 void
-GeckoApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
+GeckoApp::associateSyntax(Syntax & /*syntax*/, ActionFactory & /*action_factory*/)
 {
 }

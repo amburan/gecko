@@ -46,6 +46,7 @@
 []
 
 [BCs]
+  active = 'left_DC right_DC'
   [./left_DC]
     type = DirichletBC
     variable = temp
@@ -114,10 +115,11 @@
 []
 
 [UserObjects]
+  #active = ''
   [./lammps_uo]
     type = LammpsUserObject
-    lammpsMDInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_md
-    lammpsEquilibriationInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq
+    lammpsMDInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_md'
+    lammpsEquilibriationInput = '../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq'
     boundary = '5 6'
     leftDownScalingTemperature = lbc
     rightDownScalingTemperature = rbc
@@ -144,4 +146,3 @@
     output_initial = true
   [../]
 []
-

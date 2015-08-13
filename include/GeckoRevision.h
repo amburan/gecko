@@ -3,6 +3,6 @@
 #ifndef GECKO_REVISION_H
 #define GECKO_REVISION_H
 
-#define GECKO_REVISION "git commit fad8f87 on 2015-07-27"
+#define GECKO_REVISION "git commit 168c877 on 2015-08-13"
 
 #endif // GECKO_REVISION_H

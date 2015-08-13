@@ -39,7 +39,7 @@ public:
   /**
   * Gets the Atomic temperature for the given node based on nodal coordinates
   */
-  virtual Real getNodalAtomicTemperature() const {return 0.0;}//0 Kelvin
+  virtual Real getNodalAtomicTemperature(const Node & /*refNode*/) const {return 0.0;}//0 Kelvin
 
 };
 

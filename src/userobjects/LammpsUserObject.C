@@ -96,7 +96,7 @@ LammpsUserObject::initialize()
 
     if (lammps == 1)
     {
-      if (_lmp)
+      if (_lmp != NULL)
         delete _lmp; // avoids potential memory leak
       _lmp = new LAMMPS(0,NULL,lammpsMPIComm);
     }
@@ -152,7 +152,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
     int type=2;//0 for scalar, 1 for vector, 2 for array, 3 for full array as double **
     int nrows;
     int ncols;
-    char * iD= "AtC";
+    char iD[] = "AtC";
 
     lammps_extract_fix_arraysize(_lmp, iD, style, &nrows, &ncols);
 
@@ -191,9 +191,9 @@ LammpsUserObject::callLAMMPS() const
   std::string lbcLine;
   std::string rbcLine;
   std::string runLine;
-  void * lbc_line;
-  void * rbc_line;
-  void * run_line;
+  void * lbc_line = NULL;
+  void * rbc_line = NULL;
+  void * run_line = NULL;
 
   if (_mpiRank == 0)
   {
