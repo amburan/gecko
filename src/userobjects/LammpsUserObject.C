@@ -31,8 +31,8 @@ InputParameters validParams<LammpsUserObject>()
 }
 
 
-LammpsUserObject::LammpsUserObject(InputParameters params) :
-    MDUserObject(params),
+LammpsUserObject::LammpsUserObject(const InputParameters & parameters) :
+    MDUserObject(parameters),
     _inputEqFilePath(getParam<FileName>("lammpsEquilibriationInput")),
     _inputMDFilePath(getParam<FileName>("lammpsMDInput")),
     _mpiRank(0),

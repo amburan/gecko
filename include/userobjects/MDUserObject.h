@@ -24,7 +24,7 @@ InputParameters validParams<MDUserObject>();
 class MDUserObject : public GeneralUserObject
 {
 public:
-  MDUserObject(InputParameters params);
+  MDUserObject(const InputParameters & parameters);
   virtual ~MDUserObject();
   /**
    * Called before execute() is ever called so that data can be cleared.
