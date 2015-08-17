@@ -1,6 +1,6 @@
 [Mesh]
   type = FileMesh
-  file = atc_mesh.e
+  file = atc_mesh_large.e
   dim = 2
   block_id = 1
   block_name = atc_region
@@ -47,7 +47,7 @@
 []
 
 [Materials]
-  active = 'dummy_mat argon'
+  active = 'argon'
   [./hcm]
     type = HeatConductionMaterial
     block = 0
@@ -73,36 +73,28 @@
 []
 
 [Postprocessors]
-  active = 'lbc rbc'
-  [./rbc]
-    type = AverageNodalVariableValue
-    variable = temp
-    boundary = 6
-    execute_on = 'timestep_begin timestep_end'
-  [../]
   [./lbc]
-    type = AverageNodalVariableValue
+    type = SideAverageValue
     variable = temp
-    boundary = 5
     execute_on = 'timestep_begin timestep_end'
+    boundary = lbc_sideset
   [../]
-  [./lbc_nodal_val]
-    type = NodalVariableValue
+  [./rbc]
+    type = SideAverageValue
     variable = temp
-    nodeid = 6
+    execute_on = 'timestep_begin timestep_end'
+    boundary = rbc_sideset
   [../]
 []
 
 [UserObjects]
-  # active = ''
   [./lammps_uo]
-    # boundary = '5 6' # This is not used, run your application with --error
     type = LammpsUserObject
-    lammpsEquilibriationInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq
-    leftDownScalingTemperature = lbc
     rightDownScalingTemperature = rbc
-    LammpsTimeSteps = 1000
+    leftDownScalingTemperature = lbc
     execute_on = timestep_begin
+    LammpsTimeSteps = 1000
+    lammpsEquilibriationInput = in.bar1d_flux_eq
   [../]
 []
 

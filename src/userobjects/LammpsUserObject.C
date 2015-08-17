@@ -9,7 +9,7 @@
 /****************************************************************/
 
 #include "LammpsUserObject.h"
-//#define PRINT_NODAL_INFO_MATRIX
+#define PRINT_NODAL_INFO_MATRIX
 template <typename T>
 std::string ToString(T val)
 {
@@ -143,7 +143,7 @@ LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const
 {
   Real nodalTempVal = 0;
 
-  double nodalCoordinateTolerance = 0.0;//may need to modify this based on element size percent.
+  double nodalCoordinateTolerance = 0.1;//may need to modify this based on element size percent.
   if (_lammps_calls>0)
   {
     int style=0;//0 for global data, 1 for per-atom data, 2 for local data

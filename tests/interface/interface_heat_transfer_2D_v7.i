@@ -1,9 +1,44 @@
 [Mesh]
   type = FileMesh
-  file = atc_mesh.e
+  file = anm_mesh_small.e
   dim = 2
   block_id = 1
   block_name = atc_region
+[]
+
+[MeshModifiers]
+  active = ''
+  [./atc_block]
+    type = SubdomainBoundingBox
+    bottom_left = '-12 0 0'
+    top_right = '12 1 1'
+    block_name = atc_block
+    block_id = 1
+  [../]
+  [./atc_nodeset]
+    type = BoundingBoxNodeSet
+    top_right = '12 1 1'
+    new_boundary = atc_nodeset
+    bottom_left = '-12 0 0'
+  [../]
+  [./md_nodeset]
+    type = BoundingBoxNodeSet
+    top_right = '5 1 1'
+    new_boundary = md_nodeset
+    bottom_left = '-5 0 0 '
+  [../]
+  [./lbc_sideset]
+    type = SideSetsAroundSubdomain
+    new_boundary = lbc_sideset
+    block = 1
+    normal = '-1 0 0'
+  [../]
+  [./rbc_sideset]
+    type = SideSetsAroundSubdomain
+    new_boundary = rbc_sideset
+    block = 1
+    normal = '1 0 0'
+  [../]
 []
 
 [Variables]
@@ -41,13 +76,13 @@
   [./multiscale_DirichletBC]
     type = MultiscaleDirichletBC
     variable = temp
-    boundary = md_region
+    boundary = md_nodeset
     lammps_userobject = lammps_uo
   [../]
 []
 
 [Materials]
-  active = 'dummy_mat argon'
+  active = 'argon'
   [./hcm]
     type = HeatConductionMaterial
     block = 0
@@ -73,36 +108,27 @@
 []
 
 [Postprocessors]
-  active = 'lbc rbc'
-  [./rbc]
-    type = AverageNodalVariableValue
-    variable = temp
-    boundary = 6
-    execute_on = 'timestep_begin timestep_end'
-  [../]
   [./lbc]
-    type = AverageNodalVariableValue
+    type = SideAverageValue
     variable = temp
-    boundary = 5
     execute_on = 'timestep_begin timestep_end'
+    boundary = lbc_sideset
   [../]
-  [./lbc_nodal_val]
-    type = NodalVariableValue
+  [./rbc]
+    type = SideAverageValue
     variable = temp
-    nodeid = 6
+    execute_on = 'timestep_begin timestep_end'
+    boundary = rbc_sideset
   [../]
 []
 
 [UserObjects]
-  # active = ''
   [./lammps_uo]
-    # boundary = '5 6' # This is not used, run your application with --error
     type = LammpsUserObject
-    lammpsEquilibriationInput = ../../../../lammps/examples/COUPLE/simple/in.bar1d_flux_eq
-    leftDownScalingTemperature = lbc
     rightDownScalingTemperature = rbc
+    leftDownScalingTemperature = lbc
     LammpsTimeSteps = 1000
-    execute_on = timestep_begin
+    lammpsEquilibriationInput = in.bar1d_flux_eq
   [../]
 []
 
