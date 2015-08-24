@@ -9,7 +9,7 @@
 /****************************************************************/
 
 #include "LammpsUserObject.h"
-#define PRINT_NODAL_INFO_MATRIX
+//#define PRINT_NODAL_INFO_MATRIX
 template <typename T>
 std::string ToString(T val)
 {
@@ -63,24 +63,7 @@ LammpsUserObject::initialize()
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     printf("_mpiRank %d   nprocs %d\n",_mpiRank,nprocs);
-    int nprocs_lammps = nprocs;//atoi(arg[1]);
-    if (nprocs_lammps > nprocs)
-    {
-      if (_mpiRank == 0)
-        printf("ERROR: LAMMPS cannot use more procs than available\n");
-
-      MPI_Abort(MPI_COMM_WORLD,1);
-    }
-
-
-    int lammps=0;
-    if (_mpiRank < nprocs_lammps)
-      lammps = 1;//1 is just an arbitary color for grouping the MPI processes into one MPI communicator (lammpsMPIComm).
-    else
-      lammps = MPI_UNDEFINED;
-
-    MPI_Comm_split(MPI_COMM_WORLD,lammps,0,&lammpsMPIComm);
-
+    
     // open LAMMPS input script
     if (_mpiRank == 0)
     {
@@ -92,12 +75,10 @@ LammpsUserObject::initialize()
       }
     }
 
-    if (lammps == 1)
-    {
-      if (_lmp != NULL)
-        delete _lmp; // avoids potential memory leak
-      _lmp = new LAMMPS(0,NULL,lammpsMPIComm);
-    }
+    if (_lmp != NULL)
+      delete _lmp; // avoids potential memory leak
+    _lmp = new LAMMPS(0,NULL,MPI_COMM_WORLD);
+
 
     int n;
     char line[1024];
@@ -114,11 +95,10 @@ LammpsUserObject::initialize()
       }
 
       MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
-      if (n == 0)
+      if (n == 0)//the other processes needs the Bcast to recieve the n == 0 value.
         break;
       MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
-      if (lammps == 1)
-        _lmp->input->one(line);
+      ->input->one(line);
     }
     _lammps_initialized=true;
   }
@@ -193,33 +173,23 @@ LammpsUserObject::callLAMMPS() const
   void * rbc_line = NULL;
   void * run_line = NULL;
 
-  if (_mpiRank == 0)
-  {
-      std::string lbc_name = ToString(getParam<PostprocessorName>("leftDownScalingTemperature"));
-      std::string rbc_name = ToString(getParam<PostprocessorName>("rightDownScalingTemperature"));
-      lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
-      rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(_rightDownScaleValuePostprocessor);
-      runLine = "run 		" + ToString(_numMDTimeSteps);
-      nLbcLine = lbcLine.length() + 1;
-      nRbcLine = rbcLine.length() + 1;
-      nRunLine = runLine.length() + 1;
-      lbc_line = (void*)lbcLine.c_str();
-      rbc_line = (void*)rbcLine.c_str();
-      run_line = (void*)runLine.c_str();
-      printf("%s\n%s\n",lbcLine.c_str(),rbcLine.c_str());
-  }
-
-  MPI_Bcast(&nLbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(&nRbcLine,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(&nRunLine,1,MPI_INT,0,MPI_COMM_WORLD);
-
-  MPI_Bcast(lbc_line,nLbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
-  MPI_Bcast(rbc_line,nRbcLine,MPI_CHAR,0,MPI_COMM_WORLD);
-  MPI_Bcast(run_line,nRunLine,MPI_CHAR,0,MPI_COMM_WORLD);
-
+  std::string lbc_name = ToString(getParam<PostprocessorName>("leftDownScalingTemperature"));
+  std::string rbc_name = ToString(getParam<PostprocessorName>("rightDownScalingTemperature"));
+  lbcLine = "fix_modify      AtC  fix temperature " + lbc_name + " " + ToString(_leftDownScaleValuePostprocessor);
+  rbcLine = "fix_modify      AtC  fix temperature " + rbc_name + " " + ToString(_rightDownScaleValuePostprocessor);
+  runLine = "run 		" + ToString(_numMDTimeSteps);
+  nLbcLine = lbcLine.length() + 1;
+  nRbcLine = rbcLine.length() + 1;
+  nRunLine = runLine.length() + 1;
+  lbc_line = (void*)lbcLine.c_str();
+  rbc_line = (void*)rbcLine.c_str();
+  run_line = (void*)runLine.c_str();
+  printf("_mpiRank:%i\n%s\n%s\n",_mpiRank,lbcLine.c_str(),rbcLine.c_str());
 
   _lmp->input->one(lbcLine.c_str());
+
   _lmp->input->one(rbcLine.c_str());
+
   _lmp->input->one(runLine.c_str());
 
 
