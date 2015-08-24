@@ -1,30 +1,31 @@
 [Mesh]
   type = FileMesh
-  file = atc_mesh_small.e
+  file = atc_mesh_v10.e
   dim = 2
   block_id = 1
   block_name = atc_region
 []
 
 [MeshModifiers]
+  active = 'rbc_sideset lbc_sideset'
   [./atc_block]
     type = SubdomainBoundingBox
-    bottom_left = '-12 0 0'
-    top_right = '12 1 1'
+    bottom_left = '-120 0 0'
+    top_right = '120 10 1'
     block_name = atc_block
     block_id = 1
   [../]
   [./atc_nodeset]
     type = BoundingBoxNodeSet
-    top_right = '12 1 1'
+    top_right = '120 10 1'
     new_boundary = atc_nodeset
-    bottom_left = '-12 0 0'
+    bottom_left = '-120 0 0'
   [../]
   [./md_nodeset]
     type = BoundingBoxNodeSet
-    top_right = '5 1 1'
+    top_right = '50 10 1'
     new_boundary = md_nodeset
-    bottom_left = '-5 0 0 '
+    bottom_left = '-50 0 0 '
   [../]
   [./lbc_sideset]
     type = SideSetsAroundSubdomain
@@ -132,7 +133,7 @@
     rightDownScalingTemperature = rbc
     leftDownScalingTemperature = lbc
     LammpsTimeSteps = 1000
-    lammpsEquilibriationInput = in.bar1d_flux_eq_v8
+    lammpsEquilibriationInput = in.bar1d_flux_eq_v10
   [../]
 []
 
@@ -142,7 +143,7 @@
 
 [Executioner]
   type = Transient
-  num_steps = 200
+  num_steps = 3000
   solve_type = PJFNK
   petsc_options_iname = '-pc_type -pc_hypre_type'
   petsc_options_value = 'hypre boomeramg'

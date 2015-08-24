@@ -11,15 +11,15 @@ atom_style	atomic
 #lattice	type reduced density rho* = 4*(sigma/a)^3, where N=4 for fcc, s = 3.405 A (Wagner) and a = 5.25 A (Ashcroft & Mermin, p. 70)
 # NOTE following 3 lines added for restart
 lattice         fcc 5.405 origin 0.25 0.25 0.25
-region		simRegion block -12 12 0 1 0 1
+region		simRegion block -120 120 0 20 0 1
 # create atoms, NOTE commented out for restart
-region		mdRegion block -5 5 0 1 0 1
+region		mdRegion block -50 50 0 20 0 1
 boundary	f p p
 create_box	1 mdRegion
 create_atoms	1 region mdRegion
 mass		1 39.95
 # specify interal/ghost atoms
-region		mdInternal block -4 4 0 1 0 1
+region		mdInternal block -40 40 0 20 0 1
 group		internal region mdInternal
 group		ghost subtract all internal
 # velocities have Vcm = 0, NOTE next four lines commented out for restart
@@ -36,8 +36,8 @@ fix_modify      AtC boundary ghost
 fix_modify      AtC time_integration fractional_step
 #               ID  part keywords    nx ny nz region
 fix_modify      AtC mesh create 12 1  1  simRegion f p p
-fix_modify      AtC mesh create_faceset ibndy box -4.0 4.0 -INF INF -INF INF in
-fix_modify      AtC mesh create_faceset obndy box -4.0 4.0 -INF INF -INF INF outward
+fix_modify      AtC mesh create_faceset ibndy box -40.0 40.0 -INF INF -INF INF in
+fix_modify      AtC mesh create_faceset obndy box -40.0 40.0 -INF INF -INF INF outward
 # fix a temperature
 fix_modify     	AtC  fix temperature all 10.
 #fix_modify	AtC  fix temperature all linear 0 0 0 -0.154 0 0 30.
@@ -60,8 +60,8 @@ fix_modify	AtC  filter scale 10000.0
 #fix_modify	AtC  filter on
 # add nodesets
 #               ID  mesh create_nodeset tag xmin xmax ymin ymax zmin zmax
-fix_modify      AtC mesh create_nodeset lbc -12.1  -11.9   -INF INF   -INF INF
-fix_modify      AtC mesh create_nodeset rbc  11.9   12.1   -INF INF   -INF INF
+fix_modify      AtC mesh create_nodeset lbc -120.1  -119.9   -INF INF   -INF INF
+fix_modify      AtC mesh create_nodeset rbc  119.9   120.1   -INF INF   -INF INF
 
 # set up output, should be before a "run"
 fix_modify      AtC  output bar1d_fluxFE 100 text binary

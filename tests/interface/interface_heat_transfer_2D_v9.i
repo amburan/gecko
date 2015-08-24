@@ -1,12 +1,13 @@
 [Mesh]
   type = FileMesh
-  file = atc_mesh_small.e
+  file = atc_mesh_8_coupled_elements.e
   dim = 2
   block_id = 1
   block_name = atc_region
 []
 
 [MeshModifiers]
+  active = 'rbc_sideset lbc_sideset'
   [./atc_block]
     type = SubdomainBoundingBox
     bottom_left = '-12 0 0'
@@ -119,7 +120,7 @@
     execute_on = 'timestep_begin timestep_end'
     boundary = rbc_sideset
   [../]
-  [./avg_atomic_temp]
+  [./coupled_temp]
     type = AverageNodalVariableValue
     variable = temp
     boundary = 5
@@ -132,7 +133,7 @@
     rightDownScalingTemperature = rbc
     leftDownScalingTemperature = lbc
     LammpsTimeSteps = 1000
-    lammpsEquilibriationInput = in.bar1d_flux_eq_v8
+    lammpsEquilibriationInput = in.bar1d_flux_eq
   [../]
 []
 

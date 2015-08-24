@@ -1,30 +1,34 @@
 [Mesh]
-  type = FileMesh
-  file = atc_mesh_small.e
+  type = GeneratedMesh
   dim = 2
+  nx = 16
+  xmin = -160
+  xmax = 160
+  ymax = 20
   block_id = 1
   block_name = atc_region
 []
 
 [MeshModifiers]
+  active = 'md_nodeset atc_block atc_nodeset'
   [./atc_block]
     type = SubdomainBoundingBox
-    bottom_left = '-12 0 0'
-    top_right = '12 1 1'
+    bottom_left = '-120 0 0'
+    top_right = '120 10 1'
     block_name = atc_block
     block_id = 1
   [../]
   [./atc_nodeset]
     type = BoundingBoxNodeSet
-    top_right = '12 1 1'
+    top_right = '120 10 1'
     new_boundary = atc_nodeset
-    bottom_left = '-12 0 0'
+    bottom_left = '-120 0 0'
   [../]
   [./md_nodeset]
     type = BoundingBoxNodeSet
-    top_right = '5 1 1'
+    top_right = '50 10 1'
     new_boundary = md_nodeset
-    bottom_left = '-5 0 0 '
+    bottom_left = '-50 0 0 '
   [../]
   [./lbc_sideset]
     type = SideSetsAroundSubdomain
@@ -60,6 +64,7 @@
 
 [BCs]
   # active = 'left_DC right_DC'
+  active = 'right_DC left_DC'
   [./left_DC]
     type = DirichletBC
     variable = temp
@@ -107,6 +112,7 @@
 []
 
 [Postprocessors]
+  active = 'avg_atomic_temp'
   [./lbc]
     type = SideAverageValue
     variable = temp
@@ -127,12 +133,13 @@
 []
 
 [UserObjects]
+  active = ''
   [./lammps_uo]
     type = LammpsUserObject
     rightDownScalingTemperature = rbc
     leftDownScalingTemperature = lbc
     LammpsTimeSteps = 1000
-    lammpsEquilibriationInput = in.bar1d_flux_eq_v8
+    lammpsEquilibriationInput = in.bar1d_flux_eq
   [../]
 []
 
