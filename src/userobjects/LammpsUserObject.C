@@ -63,7 +63,7 @@ LammpsUserObject::initialize()
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     printf("_mpiRank %d   nprocs %d\n",_mpiRank,nprocs);
-    
+
     // open LAMMPS input script
     if (_mpiRank == 0)
     {
@@ -98,7 +98,7 @@ LammpsUserObject::initialize()
       if (n == 0)//the other processes needs the Bcast to recieve the n == 0 value.
         break;
       MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
-      ->input->one(line);
+      _lmp->input->one(line);
     }
     _lammps_initialized=true;
   }
