@@ -56,13 +56,13 @@ LammpsUserObject::initialize()
 {
   if (!_lammps_initialized)
   {
-    printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_lammps_calls);
+    //printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_lammps_calls);
 
     FILE *fp;
     int nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-    printf("_mpiRank %d   nprocs %d\n",_mpiRank,nprocs);
+    //printf("_mpiRank %d   nprocs %d\n",_mpiRank,nprocs);
 
     // open LAMMPS input script
     if (_mpiRank == 0)
@@ -108,7 +108,7 @@ void
 LammpsUserObject::execute()
 {
   _lammps_calls++;
-  printf("*********CALLING LAMMPS MD %d ***********\n",_lammps_calls);
+  //printf("*********CALLING LAMMPS MD %d ***********\n",_lammps_calls);
   callLAMMPS();
 }
 
@@ -184,7 +184,7 @@ LammpsUserObject::callLAMMPS() const
   lbc_line = (void*)lbcLine.c_str();
   rbc_line = (void*)rbcLine.c_str();
   run_line = (void*)runLine.c_str();
-  printf("_mpiRank:%i\n%s\n%s\n",_mpiRank,lbcLine.c_str(),rbcLine.c_str());
+  //printf("_mpiRank:%i\n%s\n%s\n",_mpiRank,lbcLine.c_str(),rbcLine.c_str());
 
   _lmp->input->one(lbcLine.c_str());
 
