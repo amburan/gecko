@@ -177,7 +177,7 @@
     leftDownScalingTemperature = tbc
     execute_on = 'TIMESTEP_END timestep_begin'
     LammpsTimeSteps = 1000
-    lammpsEquilibriationInput = in.te_bar1d_flux_eq
+    lammpsEquilibriationInput = in.te_v2
   [../]
 []
 
@@ -202,4 +202,3 @@
     type = Exodus
   [../]
 []
-
