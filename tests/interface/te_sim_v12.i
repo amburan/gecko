@@ -101,7 +101,7 @@
 []
 
 [Kernels]
-  active = 'cbck_temp cbck_volt potential hc hc_dt'
+  active = 'hc hc_dt cbck_volt'
   [./hc]
     type = HeatConduction
     variable = temp
@@ -111,29 +111,13 @@
     type = HeatConductionTimeDerivative
     variable = temp
   [../]
-  [./ntype_cbck_volt]
-    type = SeebeckVoltageKernel
-    variable = volt
-    block = ntype_block
-    v = temp
-  [../]
-  [./ntype_cbck_temp]
-    type = SeebeckTemperatureKernel
-    variable = temp
-    block = ntype_block
-  [../]
-  [./potential]
-    type = Diffusion
-    variable = volt
-    block = 'left_cold_block ptype_block hotside_block ntype_block right_cold_block atc_block'
-  [../]
   [./cbck_temp]
-    type = SeebeckTemperatureKernel
+    type = PeltierTemperatureKernel
     variable = temp
     block = 'ptype_block ntype_block hotside_block left_cold_block right_cold_block atc_block'
   [../]
   [./cbck_volt]
-    type = SeebeckVoltageKernel
+    type = PeltierVoltageKernel
     variable = volt
     block = 'ptype_block ntype_block atc_block hotside_block left_cold_block right_cold_block'
     v = temp
@@ -229,6 +213,7 @@
   exodus = true
   [./te_sim]
     type = Exodus
+    linear_residuals = true
+    output_nonlinear = true
   [../]
 []
-

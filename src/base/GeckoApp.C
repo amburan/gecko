@@ -7,6 +7,8 @@
 // Gecko incluces
 #include "MultiscaleDirichletBC.h"
 #include "LammpsUserObject.h"
+#include "PeltierVoltageKernel.h"
+#include "PeltierTemperatureKernel.h"
 #include "SeebeckVoltageKernel.h"
 #include "SeebeckTemperatureKernel.h"
 // Modules
@@ -48,6 +50,8 @@ GeckoApp::registerApps()
 void
 GeckoApp::registerObjects(Factory & factory)
 {
+  registerKernel(PeltierVoltageKernel);
+  registerKernel(PeltierTemperatureKernel);
   registerKernel(SeebeckVoltageKernel);
   registerKernel(SeebeckTemperatureKernel);
   registerBoundaryCondition(MultiscaleDirichletBC);

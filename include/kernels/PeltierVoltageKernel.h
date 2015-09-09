@@ -8,27 +8,33 @@
 /*                                                              */
 /****************************************************************/
 
-#ifndef SeebeckVoltageKernel_H
-#define SeebeckVoltageKernel_H
+#ifndef PeltierVoltageKernel_H
+#define PeltierVoltageKernel_H
 
 #include "Diffusion.h"
 #include "Material.h"
 
 //Forward Declarations
-class SeebeckVoltageKernel;
+class PeltierVoltageKernel;
 
 template<>
-InputParameters validParams<SeebeckVoltageKernel>();
+InputParameters validParams<PeltierVoltageKernel>();
 
-class SeebeckVoltageKernel : public Diffusion
+class PeltierVoltageKernel : public Diffusion
 {
 public:
 
-  SeebeckVoltageKernel(const InputParameters & parameters);
+  PeltierVoltageKernel(const InputParameters & parameters);
 
 protected:
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
+
+private:
+  const MaterialProperty<Real> & _seebeck_coefficient;
+  const MaterialProperty<Real> & _electronic_conductivity;
+  unsigned int _v_var;
+  VariableValue & _v;
 };
 
 #endif //HEATCONDUCTIONKERNEL_H

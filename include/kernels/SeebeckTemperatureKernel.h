@@ -32,7 +32,6 @@ protected:
 
 private:
   const MaterialProperty<Real> & _seebeck_coefficient;
-  const MaterialProperty<Real> & _electronic_conductivity;
 };
 
 #endif //HEATCONDUCTIONKERNEL_H

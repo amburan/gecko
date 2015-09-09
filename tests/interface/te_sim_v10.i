@@ -112,24 +112,24 @@
     variable = temp
   [../]
   [./ptype_cbck_volt]
-    type = SeebeckVoltageKernel
+    type = PeltierVoltageKernel
     variable = volt
     block = ptype_block
     v = temp
   [../]
   [./ntype_cbck_volt]
-    type = SeebeckVoltageKernel
+    type = PeltierVoltageKernel
     variable = volt
     block = ntype_block
     v = temp
   [../]
   [./ptype_cbck_temp]
-    type = SeebeckTemperatureKernel
+    type = PeltierTemperatureKernel
     variable = temp
     block = ptype_block
   [../]
   [./ntype_cbck_temp]
-    type = SeebeckTemperatureKernel
+    type = PeltierTemperatureKernel
     variable = temp
     block = ntype_block
   [../]
