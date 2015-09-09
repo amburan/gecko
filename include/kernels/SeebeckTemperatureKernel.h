@@ -11,7 +11,7 @@
 #ifndef SeebeckTemperatureKernel_H
 #define SeebeckTemperatureKernel_H
 
-#include "HeatConduction.h"
+#include "Diffusion.h"
 #include "Material.h"
 
 //Forward Declarations
@@ -20,7 +20,7 @@ class SeebeckTemperatureKernel;
 template<>
 InputParameters validParams<SeebeckTemperatureKernel>();
 
-class SeebeckTemperatureKernel : public HeatConductionKernel
+class SeebeckTemperatureKernel : public Diffusion
 {
 public:
 

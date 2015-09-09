@@ -101,32 +101,21 @@
 []
 
 [Kernels]
-  active = 'ntype_cbck_volt ntype_cbck_temp ptype_cbck_temp ptype_cbck_volt hc_dt'
+  active = 'cbck_temp cbck_volt potential hc hc_dt'
   [./hc]
     type = HeatConduction
     variable = temp
-    block = '0 1 2 3 4'
+    block = '0 1 2 3 4 5'
   [../]
   [./hc_dt]
     type = HeatConductionTimeDerivative
     variable = temp
-  [../]
-  [./ptype_cbck_volt]
-    type = SeebeckVoltageKernel
-    variable = volt
-    block = ptype_block
-    v = temp
   [../]
   [./ntype_cbck_volt]
     type = SeebeckVoltageKernel
     variable = volt
     block = ntype_block
     v = temp
-  [../]
-  [./ptype_cbck_temp]
-    type = SeebeckTemperatureKernel
-    variable = temp
-    block = ptype_block
   [../]
   [./ntype_cbck_temp]
     type = SeebeckTemperatureKernel
@@ -136,7 +125,18 @@
   [./potential]
     type = Diffusion
     variable = volt
-    block = 'left_cold_block ptype_block hotside_block ntype_block right_cold_block'
+    block = 'left_cold_block ptype_block hotside_block ntype_block right_cold_block atc_block'
+  [../]
+  [./cbck_temp]
+    type = SeebeckTemperatureKernel
+    variable = temp
+    block = 'ptype_block ntype_block hotside_block left_cold_block right_cold_block atc_block'
+  [../]
+  [./cbck_volt]
+    type = SeebeckVoltageKernel
+    variable = volt
+    block = 'ptype_block ntype_block atc_block hotside_block left_cold_block right_cold_block'
+    v = temp
   [../]
 []
 
@@ -162,11 +162,12 @@
 []
 
 [Materials]
+  active = 'Copper n_type_mat p_type_mat'
   [./Copper]
     type = GenericConstantMaterial
-    block = 'hotside_block left_cold_block right_cold_block'
-    prop_names = 'thermal_conductivity specific_heat density' # [W/(m.K)], [J/(kg.K)]@ 25 C, [kg/m3]
-    prop_values = '350 385 8940'
+    block = 'hotside_block left_cold_block right_cold_block atc_block'
+    prop_names = 'thermal_conductivity specific_heat density seebeck_coefficient electronic_conductivity' # [W/(m.K)], [J/(kg.K)]@ 25 C, [kg/m3]
+    prop_values = '350 385 8940 6.5E-6 5.9E+8'
   [../]
   [./p_type_mat]
     type = GenericConstantMaterial
@@ -230,3 +231,4 @@
     type = Exodus
   [../]
 []
+

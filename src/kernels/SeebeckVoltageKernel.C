@@ -38,7 +38,7 @@ SeebeckVoltageKernel::SeebeckVoltageKernel(const InputParameters & parameters) :
 Real
 SeebeckVoltageKernel::computeQpResidual()
 {
-  return -_grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp] * _v[_qp] * _grad_u[_qp];
+  return _grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp] * _v[_qp] * _grad_u[_qp] - _test[_i][_qp] *_electronic_conductivity[_qp] * _grad_u[_qp] * _grad_u[_qp] ;
 }
 
 Real

@@ -14,7 +14,7 @@
 template<>
 InputParameters validParams<SeebeckTemperatureKernel>()
 {
-  InputParameters params = validParams<HeatConductionKernel>();
+  InputParameters params = validParams<Diffusion>();
   params.addClassDescription("Compute the Seebeck/Peltier contribution in thermoelectric material thermal transport");
   params.addParam<MaterialPropertyName>("seebeck_coefficient_name",
                                         "seebeck_coefficient",
@@ -26,7 +26,7 @@ InputParameters validParams<SeebeckTemperatureKernel>()
 }
 
 SeebeckTemperatureKernel::SeebeckTemperatureKernel(const InputParameters & parameters) :
-    HeatConductionKernel(parameters),
+    Diffusion(parameters),
     _seebeck_coefficient(getMaterialProperty<Real>("seebeck_coefficient_name")),
     _electronic_conductivity(getMaterialProperty<Real>("electronic_conductivity_name"))
 {
@@ -35,7 +35,7 @@ SeebeckTemperatureKernel::SeebeckTemperatureKernel(const InputParameters & param
 Real
 SeebeckTemperatureKernel::computeQpResidual()
 {
-  return -_grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp] * _seebeck_coefficient[_qp] * _u[_qp] * _grad_u[_qp] * HeatConductionKernel::computeQpResidual();
+  return _grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp] * _seebeck_coefficient[_qp] * _u[_qp] * _grad_u[_qp];
 }
 
 Real
