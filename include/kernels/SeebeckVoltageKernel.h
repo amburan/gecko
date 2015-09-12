@@ -29,6 +29,9 @@ public:
 protected:
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
+
+private:
+  const MaterialProperty<Real> & _electronic_conductivity;
 };
 
 #endif //HEATCONDUCTIONKERNEL_H

@@ -101,7 +101,7 @@
 []
 
 [Kernels]
-  active = 'hc hc_dt cbck_volt'
+  active = 'hc cbck_temp cbck_volt'
   [./hc]
     type = HeatConduction
     variable = temp
@@ -112,15 +112,14 @@
     variable = temp
   [../]
   [./cbck_temp]
-    type = PeltierTemperatureKernel
+    type = SeebeckTemperatureKernel
     variable = temp
     block = 'ptype_block ntype_block hotside_block left_cold_block right_cold_block atc_block'
   [../]
   [./cbck_volt]
-    type = PeltierVoltageKernel
+    type = SeebeckVoltageKernel
     variable = volt
     block = 'ptype_block ntype_block atc_block hotside_block left_cold_block right_cold_block'
-    v = temp
   [../]
 []
 
@@ -151,19 +150,19 @@
     type = GenericConstantMaterial
     block = 'hotside_block left_cold_block right_cold_block atc_block'
     prop_names = 'thermal_conductivity specific_heat density seebeck_coefficient electronic_conductivity' # [W/(m.K)], [J/(kg.K)]@ 25 C, [kg/m3]
-    prop_values = '350 385 8940 6.5E-6 5.9E+8'
+    prop_values = '400 385 8700 0 5.9E+7'
   [../]
   [./p_type_mat]
     type = GenericConstantMaterial
     block = ptype_block
     prop_names = 'thermal_conductivity specific_heat density seebeck_coefficient electronic_conductivity' # [W/(m.K)][] [kg/m3]]
-    prop_values = '1.2 155.875 7858.7 200E+6 1.1E-5' # denisty:http://scholarworks.uno.edu/cgi/viewcontent.cgi?article=2513&context=td
+    prop_values = '1.6 154.4 7740 200E-6 1.1E+5' # denisty:http://scholarworks.uno.edu/cgi/viewcontent.cgi?article=2513&context=td
   [../]
   [./n_type_mat]
     type = GenericConstantMaterial
     block = ntype_block
     prop_names = 'thermal_conductivity specific_heat density seebeck_coefficient electronic_conductivity' # [W/(m.K)]
-    prop_values = '1.4 135.875 7858.7  200E-6 1.1E-5'
+    prop_values = '1.6 154.4 7740 -200E-6 1.1E+5'
   [../]
   [./dummy_mat]
     type = GenericConstantMaterial
@@ -217,3 +216,4 @@
     output_nonlinear = true
   [../]
 []
+

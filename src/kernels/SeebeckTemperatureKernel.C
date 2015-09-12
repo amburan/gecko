@@ -19,19 +19,23 @@ InputParameters validParams<SeebeckTemperatureKernel>()
   params.addParam<MaterialPropertyName>("seebeck_coefficient_name",
                                         "seebeck_coefficient",
                                         "Property name of the seebeck coefficient (Default: seebeck_coefficient");
+  params.addParam<MaterialPropertyName>("electronic_conductivity_name",
+                                        "electronic_conductivity",
+                                        "Property name of the electronic conductivity (Default: electronic_conductivity");
   return params;
 }
 
 SeebeckTemperatureKernel::SeebeckTemperatureKernel(const InputParameters & parameters) :
     Diffusion(parameters),
-    _seebeck_coefficient(getMaterialProperty<Real>("seebeck_coefficient_name"))
+    _seebeck_coefficient(getMaterialProperty<Real>("seebeck_coefficient_name")),
+    _electronic_conductivity(getMaterialProperty<Real>("electronic_conductivity_name"))
 {
 }
 
 Real
 SeebeckTemperatureKernel::computeQpResidual()
 {
-  return 0;//_test[_i][_qp] * _seebeck_coefficient[_qp] * _grad_u[_qp];
+  return _grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp] * _grad_u[_qp];
 }
 
 Real
