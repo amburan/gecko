@@ -31,6 +31,8 @@ protected:
   virtual Real computeQpJacobian();
 
 private:
+  VariableGradient & _grad_v;
+  const MaterialProperty<Real> & _seebeck_coefficient;
   const MaterialProperty<Real> & _electronic_conductivity;
 };
 

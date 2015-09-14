@@ -41,5 +41,5 @@ SeebeckTemperatureKernel::computeQpResidual()
 Real
 SeebeckTemperatureKernel::computeQpJacobian()
 {
-  return 0;//_grad_phi[_j][_qp] * _grad_test[_i][_qp];
+  return _grad_phi[_j][_qp] * _grad_test[_i][_qp] * _electronic_conductivity[_qp] * _seebeck_coefficient[_qp];
 }

@@ -101,7 +101,7 @@
 []
 
 [Kernels]
-  active = 'hc cbck_temp cbck_volt'
+  active = 'hc cbck_temp'
   [./hc]
     type = HeatConduction
     variable = temp
@@ -113,8 +113,9 @@
   [../]
   [./cbck_temp]
     type = SeebeckTemperatureKernel
-    variable = temp
+    variable = volt
     block = 'ptype_block ntype_block hotside_block left_cold_block right_cold_block atc_block'
+    v = temp
   [../]
   [./cbck_volt]
     type = SeebeckVoltageKernel
