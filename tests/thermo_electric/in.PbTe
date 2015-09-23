@@ -1,0 +1,116 @@
+units		real
+atom_style	charge
+
+# create domain
+lattice custom 1 origin 0.25 0.25 0.25 &
+a1 6.518352 0.0 0.0 a2 0.0 6.518352 0.0 a3 0.0 0.0 6.518352 &
+basis 0.0 0.0 0.0 &
+basis 0.5 0.0 0.0 &
+basis 0.0 0.5 0.0 &
+basis 0.5 0.5 0.0 &
+basis 0.0 0.0 0.5 &
+basis 0.5 0.0 0.5 &
+basis 0.0 0.5 0.5 &
+basis 0.5 0.5 0.5
+
+region		simRegion block 0 7 0 7 0 20
+region		mdRegion block 1 6 1 6 5 15
+boundary	p p p
+create_box	2 mdRegion
+create_atoms 2 region mdRegion basis 1 1 basis 2 2 basis 3 2 basis 4 1 basis 5 2 basis 6 1 basis 7 1 basis 8 2
+
+group Pb type 1
+group Te type 2
+
+mass 2 127.60
+mass 1 207.2
+
+set group Pb charge 0.666
+set group Te charge -0.666
+
+kspace_style    ewald 1.0e-6
+#kspace_modify slab nozforce
+
+# specify interal/ghost atoms
+region		mdInternal block 2 5 2 5 6 14
+group		internal region mdInternal
+group		ghost subtract all internal
+
+pair_style hybrid/overlay buck 8.0 coul/long 12.0
+pair_coeff 1 1 buck 1941770 0.0754 1406.9
+pair_coeff 1 2 buck 2124600 0.2552 13507
+pair_coeff 2 2 buck 40900460 0.2565 14.1
+pair_coeff * * coul/long
+
+neighbor 0.3 bin
+neigh_modify every 20 delay 0 check no
+
+
+
+#MINIMIZATION
+minimize 0.0 1.0e-8 1000 100000
+
+
+#DYNAMIC EQUILIBRIATION
+print "----------------------DYNAMIC EQUILIBRIATION (NVT)--------------------"
+velocity	internal create 40. 87287 mom yes loop geom
+variable xdof equal 3*count(ghost)
+compute_modify thermo_temp extra ${xdof}
+thermo_style custom step cpu etotal pe temp
+thermo_modify  format 1 %6i format 2 %7.2g
+fix 1 all nvt temp 40.0 40.0 100.0
+# equilibrate MD field
+dump            D3 all atom 10 dump.bar1d
+timestep	5
+thermo		10
+run 		100
+
+print "----------------------DYNAMIC EQUILIBRIATION (ATC)--------------------"
+#               ID  group atc PhysicsType ParameterFile
+fix             AtC internal   atc thermal     Bi2Te3_thermal.mat
+fix_modify      AtC boundary ghost
+fix_modify      AtC time_integration fractional_step
+#               ID  part keywords    nx ny nz region
+fix_modify      AtC mesh create 2 2 10  simRegion p p p
+# fix a temperature
+fix_modify     	AtC  fix temperature all 40.
+# turn on thermostat
+fix_modify	AtC  control thermal rescale 10
+dump            D4 all atom 10 dump.equilibrium
+timestep	1
+thermo		10
+run 		1000
+
+#PRODUCTION
+print "----------------------PRODUCTION--------------------"
+# change thermostat to hoover
+fix_modify	AtC  unfix temperature all
+fix_modify	AtC  control thermal none
+fix_modify	AtC  control thermal flux interpolate
+fix_modify AtC control max_iterations 100
+fix_modify AtC control tolerance 1.e-6
+
+#fix_modify	AtC  control localized_lambda on
+#fix_modify	AtC  thermal control flux faceset obndy
+fix_modify      AtC  filter type exponential
+fix_modify	AtC  filter scale 10000.0
+#fix_modify	AtC  filter on
+
+
+# add nodesets
+#               ID  mesh create_nodeset tag xmin xmax ymin ymax zmin zmax
+fix_modify      AtC mesh create_nodeset tbc -INF INF -INF INF 19.9 20.1
+fix_modify      AtC mesh create_nodeset bbc -INF INF -INF INF -0.1 0.1
+
+# set up output, should be before a "run"
+fix_modify      AtC  output bar1d_fluxFE 100 text binary
+# ouput command
+dump            D1 all atom 1 dump.production
+# run with FE
+reset_timestep 0
+timestep	1
+thermo		100
+
+fix_modify      AtC  fix temperature tbc 45
+fix_modify      AtC  fix temperature bbc 40
+run 		1000
