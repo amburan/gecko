@@ -1,0 +1,5 @@
+material Bi2Te3 real
+ heat_flux linear
+  conductivity 339.54
+ end
+end
