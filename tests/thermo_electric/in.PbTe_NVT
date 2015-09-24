@@ -14,7 +14,7 @@ basis 0.5 0.0 0.5 &
 basis 0.0 0.5 0.5 &
 basis 0.5 0.5 0.5
 
-region		simRegion block 0 7 0 7 0 20
+region		simRegion block -10 10 -10 10 0 20
 region		mdRegion block 1 6 1 6 5 15
 boundary	p p p
 create_box	2 mdRegion
@@ -41,7 +41,7 @@ kspace_style    ewald 1.0e-6
 #kspace_modify slab nozforce
 
 # specify interal/ghost atoms
-region		mdInternal block 2 5 2 5 6 14
+region		mdInternal block 1 6 1 6 6 14
 group		internal region mdInternal
 group		ghost subtract all internal
 
@@ -63,18 +63,18 @@ minimize 0.0 1.0e-8 1000 100000
 
 #DYNAMIC EQUILIBRIATION
 print "----------------------DYNAMIC EQUILIBRIATION (NVT)--------------------"
-velocity	internal create 40. 87287 mom yes loop geom
+velocity	internal create 200.0 87287 mom yes loop geom
 variable xdof equal 3*count(ghost)
 compute_modify thermo_temp extra ${xdof}
 thermo_style custom step cpu etotal pe temp
 thermo_modify  format 1 %6i format 2 %7.2g
-fix 1 all nvt temp 200.0 200.0 10.0
+fix eq all nvt temp 200.0 200.0 10.0
 # equilibrate MD field
-dump            D3 all atom 10 dump.equilibrium_nvt
+dump            D3 all atom 100 dump.equilibrium_nvt
 timestep	5
-thermo		10
+thermo		100
 run 		1000
-
+unfix eq
 print "----------------------DYNAMIC EQUILIBRIATION (ATC)--------------------"
 #               ID  group atc PhysicsType ParameterFile
 fix             AtC internal   atc thermal     Bi2Te3_thermal.mat
@@ -83,10 +83,44 @@ fix_modify      AtC time_integration fractional_step
 #               ID  part keywords    nx ny nz region
 fix_modify      AtC mesh create 2 2 10  simRegion p p p
 # fix a temperature
-fix_modify     	AtC  fix temperature all 40.
+fix_modify     	AtC  fix temperature all 200.
 # turn on thermostat
 fix_modify	AtC  control thermal rescale 10
-dump            D4 all atom 10 dump.equilibrium_atc
+dump            D4 all atom 100 dump.equilibrium_atc
 timestep	1
-thermo		10
+thermo		100
+run 		1000
+
+#PRODUCTION
+print "----------------------PRODUCTION--------------------"
+# change thermostat to hoover
+fix_modify	AtC  unfix temperature all
+fix_modify	AtC  control thermal none
+fix_modify	AtC  control thermal flux interpolate
+fix_modify AtC control max_iterations 100
+fix_modify AtC control tolerance 1.e-6
+
+#fix_modify	AtC  control localized_lambda on
+#fix_modify	AtC  thermal control flux faceset obndy
+fix_modify      AtC  filter type exponential
+fix_modify	AtC  filter scale 100.0
+#fix_modify	AtC  filter on
+
+
+# add nodesets
+#               ID  mesh create_nodeset tag xmin xmax ymin ymax zmin zmax
+fix_modify      AtC mesh create_nodeset tbc -INF INF -INF INF 19.9 20.1
+fix_modify      AtC mesh create_nodeset bbc -INF INF -INF INF -0.1 0.1
+
+# set up output, should be before a "run"
+fix_modify      AtC  output bar1d_fluxFE 100 text binary
+# ouput command
+dump            D1 all atom 100 dump.production
+# run with FE
+reset_timestep 0
+timestep	1
+thermo		100
+
+fix_modify      AtC  fix temperature tbc 250
+fix_modify      AtC  fix temperature bbc 200
 run 		1000
