@@ -6,7 +6,7 @@ Lammps needs to be built before building gecko. For more information about downl
 
 
 ## FAQ ##
-===
+
 1) I have other versions of python installed. When I try to launch peacock I get the following error. What do I do?
 ```
 #!bash
