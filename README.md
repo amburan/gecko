@@ -19,5 +19,5 @@ ImportError: Cannot load either PyQt or PySide
 A. Run the following command.
 ```
 #!bash
-   $ module purge; module load moose-dev-clang moose-tools
+$ module purge; module load moose-dev-clang moose-tools
 ```
