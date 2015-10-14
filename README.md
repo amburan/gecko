@@ -1,3 +1,5 @@
+
+
 Gecko
 =====
 
@@ -8,6 +10,7 @@ Lammps needs to be built before building gecko. For more information about downl
 **FAQ**
 ===
 **1) I have other versions of python installed. When I try to launch peacock I get the following error. What do I do?**
+```
 #!bash
 $ peacock -i some_input_file.i 
 Traceback (most recent call last):
@@ -16,5 +19,7 @@ Traceback (most recent call last):
 ImportError: Cannot load either PyQt or PySide
 ```
 A. run the following command.
-
+```
+#!bash
    $ module purge; module load moose-dev-clang moose-tools
+```
