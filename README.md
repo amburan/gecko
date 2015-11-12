@@ -21,3 +21,26 @@ A. Run the following command.
 #!bash
 $ module purge; module load moose-dev-clang moose-tools
 ```
+
+2) I have built lammps, but the lammps shared library is not loaded and I get the following error:
+```
+#!bash
+/home/sthomas/projects/gecko/gecko-dbg: error while loading shared libraries: liblammps_mpi.so: cannot open shared object file: No such file or directory
+```
+Q. Folow #STEP 5 in lammps installation: Add paths to lammps and atc shared libraries so that the executable knows where to find them. This variable is operating system dependent.
+
+For Mac add the following lines in .bash_profile
+```
+#!bash
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$HOME/lammps/lib/atc
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/moose/gcc_4.9.1/lib
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$HOME/lammps/src
+```
+
+For Linux add the following lines in .bashrc
+```
+#!bash
+export LD_LIBRARY_PATH=$HOME/lammps/src:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/lammps/lib/atc:$LD_LIBRARY_PATH
+```
+Now gecko can be built and run!
