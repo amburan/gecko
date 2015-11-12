@@ -25,7 +25,7 @@ $ module purge; module load moose-dev-clang moose-tools
 2) I have built lammps, but the lammps shared library is not loaded and I get the following error:
 ```
 #!bash
-/home/sthomas/projects/gecko/gecko-dbg: error while loading shared libraries: liblammps_mpi.so: cannot open shared object file: No such file or directory
+$ error while loading shared libraries: liblammps_mpi.so: cannot open shared object file: No such file or directory
 ```
 A. Folow #STEP 5 in lammps installation: Add paths to lammps and atc shared libraries so that the executable knows where to find them. This variable is operating system dependent.
 
