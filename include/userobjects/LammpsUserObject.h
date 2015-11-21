@@ -20,9 +20,13 @@
 #include <sstream>
 
 #include "lammps.h"         // these are LAMMPS include files
+#include "memory.h"
 #include "input.h"
 #include "atom.h"
 #include "library.h"
+#include "modify.h"
+#include "fix.h"
+#include "fix_atc.h"
 
 using namespace LAMMPS_NS;
 
@@ -57,6 +61,13 @@ public:
   */
   virtual Real getNodalAtomicTemperature(const Node & refNode) const;
 
+  //void moose_callback(int);
+
+  struct Info {
+    int me;
+    //Memory *memory;
+    LAMMPS *lmp;
+  };
 
 protected:
   /**
@@ -98,6 +109,17 @@ private:
 
   /// Number of calls to lammps
   unsigned int _lammps_calls;
+
+  /// The AtC block name supplied by the user via the input file
+  SubdomainName _atc_block_name;
+
+  void initialize_lammps();
+
+  void equilibriate_md();
+
+  void add_atc_fix();
+
+  void equilibriate_atc();
 
 };
 

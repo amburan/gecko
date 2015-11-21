@@ -1,0 +1,41 @@
+#write_restart	tinit.dat
+#               ID  group atc PhysicsType ParameterFile
+fix             AtC internal   atc thermal     Ar_thermal.mat
+fix_modify      AtC boundary ghost
+fix_modify      AtC time_integration fractional_step
+#               ID  part keywords    nx ny nz region
+fix_modify      AtC mesh create 12 1  1  simRegion f p p
+fix_modify      AtC mesh create_faceset ibndy box -40.0 40.0 -INF INF -INF INF in
+fix_modify      AtC mesh create_faceset obndy box -40.0 40.0 -INF INF -INF INF outward
+# fix a temperature
+fix_modify     	AtC  fix temperature all 10.
+#fix_modify	AtC  fix temperature all linear 0 0 0 -0.154 0 0 30.
+# turn on thermostat
+fix_modify	AtC  control thermal rescale 10
+variable xdof equal 3*count(ghost)
+compute_modify thermo_temp extra ${xdof}
+thermo_style custom step cpu etotal pe f_AtC[1] temp f_AtC[2]
+thermo_modify  format 1 %6i format 2 %7.2g
+# equilibrate MD field
+#fix_modify      AtC  output bar1dfe_flux_init 100
+timestep	5
+thermo		10
+run 		400
+# change thermostat to hoover
+fix_modify	AtC  unfix temperature all
+fix_modify  	AtC  control thermal flux faceset obndy
+fix_modify      AtC  filter type exponential
+fix_modify	AtC  filter scale 10000.0
+#fix_modify	AtC  filter on
+# add nodesets
+#               ID  mesh create_nodeset tag xmin xmax ymin ymax zmin zmax
+fix_modify      AtC mesh create_nodeset lbc -120.1  -119.9   -INF INF   -INF INF
+fix_modify      AtC mesh create_nodeset rbc  119.9   120.1   -INF INF   -INF INF
+
+# set up output, should be before a "run"
+fix_modify      AtC  output bar1d_fluxFE 100 text binary
+# ouput command
+#dump            D1 all atom 1000 dump.bar1d
+# run with FE
+reset_timestep 0
+thermo		100

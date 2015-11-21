@@ -10,6 +10,7 @@
 
 #include "LammpsUserObject.h"
 //#define PRINT_NODAL_INFO_MATRIX
+
 template <typename T>
 std::string ToString(T val)
 {
@@ -26,6 +27,9 @@ InputParameters validParams<LammpsUserObject>()
   params.addRequiredParam<PostprocessorName>("leftDownScalingTemperature","A post processor object for getting the temperature value for downscaling the left MD boundary.");
   params.addRequiredParam<PostprocessorName>("rightDownScalingTemperature","A post processor object for getting the temperature value for downscaling the right MD boundary.");
   params.addRequiredParam<Real>("LammpsTimeSteps","The number of timesteps to run in LAMMPS. Please note that this is the number of timesteps for the MD simulation only and not the equilibriation.");
+  params.addRequiredParam<SubdomainName>("AtC_block", "The block id (SubdomainID) where AtC coupling is enabled");
+
+  params.addParamNamesToGroup("lammpsEquilibriationInput leftDownScalingTemperature rightDownScalingTemperature LammpsTimeSteps AtC_block", "Lammps parameters");
   return params;
 }
 
@@ -39,7 +43,8 @@ LammpsUserObject::LammpsUserObject(const InputParameters & parameters) :
     _numMDTimeSteps(getParam<Real>("LammpsTimeSteps")),
     _lmp(NULL),
     _lammps_initialized(false),
-    _lammps_calls(0)
+    _lammps_calls(0),
+    _atc_block_name(getParam<SubdomainName>("AtC_block"))
 {
 }
 
@@ -56,8 +61,103 @@ LammpsUserObject::initialize()
 {
   if (!_lammps_initialized)
   {
+    initialize_lammps();
     //printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_lammps_calls);
+    equilibriate_md();
+    add_atc_fix();
+    equilibriate_atc();
+    _lammps_initialized=true;
+  }
+}
 
+void
+LammpsUserObject::execute()
+{
+  _lammps_calls++;
+  //printf("*********CALLING LAMMPS MD %d ***********\n",_lammps_calls);
+  callLAMMPS();
+}
+
+void
+LammpsUserObject::finalize()
+{
+
+}
+
+void
+LammpsUserObject::equilibriate_atc()
+{
+    if (_mpiRank == 0)
+    {
+        char str[128];
+        FILE *fp = fopen("in.fix_initial_temperature","w");
+
+        fprintf(fp,"fix_modify      AtC mesh\n");
+
+        sprintf(str,"fix_modify     	AtC  fix temperature all 10.\n");
+        fprintf(fp,"%s",str);
+        fprintf(fp,"fix_modify	AtC  control thermal rescale 10\n");
+        fprintf(fp,"timestep	5\n");
+        fprintf(fp,"thermo		10\n");
+        fprintf(fp,"run 		400\n");
+        //fprintf(fp,"fix_modify	AtC  unfix temperature all\n");
+        //fprintf(fp,"fix_modify  	AtC  control thermal flux faceset obndy\n");
+        fclose(fp);
+
+        _lmp->input->file("in.fix_initial_temperature");
+    }
+}
+
+void
+moose_callback(int nlocal)
+{
+
+}
+
+void
+LammpsUserObject::add_atc_fix()
+{
+     unsigned int nElem = _fe_problem.mesh().nElem();
+    if (_mpiRank == 0)
+    {
+        char str[128];
+        FILE *fp = fopen("in.add_atc_fix","w");
+        //if (fp == NULL) error->one("Could not create LAMMPS input script");
+
+        sprintf(str,"fix AtC internal    atc thermal %s\n","Ar_thermal.mat");
+        fprintf(fp,"%s",str);
+        fprintf(fp,"fix AtC internal    atc thermal Ar_thermal.mat\n");
+        fprintf(fp,"fix_modify      AtC boundary ghost\n");
+        fprintf(fp,"fix_modify      AtC time_integration fractional_step\n");
+
+        fclose(fp);
+
+        _lmp->input->file("in.add_atc_fix");
+
+        Info info;
+        info.me = 0;//_mpiRank
+        //info.memory = memory;
+        info.lmp = _lmp;
+
+        int ifix = _lmp->modify->find_fix("AtC");
+        FixATC *fix = (FixATC *) _lmp->modify->fix[ifix];
+        fix->set_callback(&moose_callback);
+    }
+}
+
+
+
+void
+LammpsUserObject::initialize_lammps()
+{
+    if (_lmp != NULL)
+      delete _lmp; // avoids potential memory leak
+    _lmp = new LAMMPS(0,NULL,MPI_COMM_WORLD);
+}
+
+void
+LammpsUserObject::equilibriate_md()
+{
     FILE *fp;
     int nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
@@ -74,11 +174,6 @@ LammpsUserObject::initialize()
         MPI_Abort(MPI_COMM_WORLD,1);
       }
     }
-
-    if (_lmp != NULL)
-      delete _lmp; // avoids potential memory leak
-    _lmp = new LAMMPS(0,NULL,MPI_COMM_WORLD);
-
 
     int n;
     char line[1024];
@@ -100,22 +195,6 @@ LammpsUserObject::initialize()
       MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
       _lmp->input->one(line);
     }
-    _lammps_initialized=true;
-  }
-}
-
-void
-LammpsUserObject::execute()
-{
-  _lammps_calls++;
-  //printf("*********CALLING LAMMPS MD %d ***********\n",_lammps_calls);
-  callLAMMPS();
-}
-
-void
-LammpsUserObject::finalize()
-{
-
 }
 
 Real
