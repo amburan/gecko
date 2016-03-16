@@ -12,6 +12,9 @@
 #define LAMMPSUSEROBJECT_H
 
 #include "MDUserObject.h"
+#include "MooseMesh.h"
+#include "libmesh/quadrature.h"
+#include "Assembly.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -61,7 +64,9 @@ public:
   */
   virtual Real getNodalAtomicTemperature(const Node & refNode) const;
 
-  //void moose_callback(int);
+  void* moose_callback(const int);
+
+  static void* moose_callback_wrapper(void*, int);
 
   struct Info {
     int me;
@@ -102,7 +107,7 @@ protected:
 private:
 
   /// LAMMPS object which lives throught the life of the Gecko object
-  LAMMPS * _lmp;
+  LAMMPS *_lmp;
 
   /// True when lammps is initialized
   bool _lammps_initialized;
@@ -120,6 +125,16 @@ private:
   void add_atc_fix();
 
   void equilibriate_atc();
+
+  void set_atc_parameters();
+
+ protected:
+  void get_nodeset(std::set<int>&);
+
+  /// Pointer to FEProblem
+  FEProblem * _blk_feproblem;
+
+  MooseMesh *_atc_mesh;
 
 };
 

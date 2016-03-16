@@ -34,7 +34,7 @@ private:
   const MaterialProperty<Real> & _seebeck_coefficient;
   const MaterialProperty<Real> & _electronic_conductivity;
   unsigned int _v_var;
-  VariableValue & _v;
+  const VariableValue & _v;
 };
 
 #endif //HEATCONDUCTIONKERNEL_H

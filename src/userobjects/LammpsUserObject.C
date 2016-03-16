@@ -44,7 +44,9 @@ LammpsUserObject::LammpsUserObject(const InputParameters & parameters) :
     _lmp(NULL),
     _lammps_initialized(false),
     _lammps_calls(0),
-    _atc_block_name(getParam<SubdomainName>("AtC_block"))
+    _atc_block_name(getParam<SubdomainName>("AtC_block")),
+    _blk_feproblem(parameters.isParamValid("_fe_problem") ? parameters.get<FEProblem *>("_fe_problem") : NULL),
+    _atc_mesh(parameters.isParamValid("_mesh") ? parameters.get<MooseMesh *>("_mesh") : NULL)
 {
 }
 
@@ -61,6 +63,12 @@ LammpsUserObject::initialize()
 {
   if (!_lammps_initialized)
   {
+    if (_blk_feproblem != NULL && _atc_mesh == NULL)
+        _atc_mesh = &_blk_feproblem->mesh();
+
+    if (!_atc_mesh)
+      mooseError("_mesh_ptr must be initialized before calling LammpsUserObject::moose_callback()!");
+
     initialize_lammps();
     //printf("*********CALLING LAMMPS EQUILIBRIATION%d ***********\n",_lammps_calls);
     equilibriate_md();
@@ -85,34 +93,219 @@ LammpsUserObject::finalize()
 }
 
 void
+LammpsUserObject::equilibriate_md()
+{
+    if (_mpiRank == 0)
+    {
+        char str[128];
+        FILE *fp = fopen("in.init_atoms","w");
+
+        fprintf(fp,"units		real\n");
+        fprintf(fp,"atom_style	atomic\n");
+        fprintf(fp,"lattice         fcc 5.405 origin 0.25 0.25 0.25\n");
+        double xmin = _atc_mesh->getMinInDimension(0);
+        double xmax = _atc_mesh->getMaxInDimension(0);
+        double ymin = _atc_mesh->getMinInDimension(1);
+        double ymax = _atc_mesh->getMaxInDimension(1);
+        double zmin = _atc_mesh->getMinInDimension(2);
+        double zmax = _atc_mesh->getMaxInDimension(2);
+
+        sprintf(str,"region		simRegion block %f %f %f %f %f %f units box\n",xmin-5.405,xmax+5.405,
+                                                                               ymin,ymax,
+                                                                               zmin,zmax);
+        fprintf(fp,"%s",str);
+
+        fprintf(fp,"boundary	f p p\n");
+        fprintf(fp,"create_box	1 simRegion\n");
+        fprintf(fp,"create_atoms	1 region simRegion\n");
+        fprintf(fp,"mass		1 39.95\n");
+
+        sprintf(str,"region		mdInternal block %f %f %f %f %f %f units box\n",xmin,xmax,
+                                                                                ymin,ymax,
+                                                                                zmin,zmax);
+        fprintf(fp,"%s",str);
+        fprintf(fp,"group		internal region mdInternal\n");
+        fprintf(fp,"velocity	internal create 400. 87287 mom yes loop geom\n");
+        fprintf(fp,"pair_style	lj/cut 13.5\n");
+        fprintf(fp,"pair_coeff  	1 1 .238 3.405 13.5\n");
+        fprintf(fp,"neighbor	5. bin\n");
+        fprintf(fp,"neigh_modify	every 10 delay 0 check no\n");
+
+        fclose(fp);
+
+        _lmp->input->file("in.init_atoms");
+    }
+}
+
+void
 LammpsUserObject::equilibriate_atc()
 {
     if (_mpiRank == 0)
     {
         char str[128];
-        FILE *fp = fopen("in.fix_initial_temperature","w");
+        FILE *fp = fopen("in.equilibriate_atc","w");
 
         fprintf(fp,"fix_modify      AtC mesh\n");
 
-        sprintf(str,"fix_modify     	AtC  fix temperature all 10.\n");
-        fprintf(fp,"%s",str);
+        //fix a temperature
+        fprintf(fp,"fix_modify     	AtC  fix temperature all 200.\n");
         fprintf(fp,"fix_modify	AtC  control thermal rescale 10\n");
-        fprintf(fp,"timestep	5\n");
-        fprintf(fp,"thermo		10\n");
+        fprintf(fp,"fix_modify      AtC  internal_quadrature off\n");
+        fprintf(fp,"fix_modify	AtC  time_integration fractional_step\n");
+        fprintf(fp,"fix_modify	AtC  temperature_definition total\n");
+        fprintf(fp,"timestep	0.1\n");
+        fprintf(fp,"thermo		400\n");
         fprintf(fp,"run 		400\n");
-        //fprintf(fp,"fix_modify	AtC  unfix temperature all\n");
-        //fprintf(fp,"fix_modify  	AtC  control thermal flux faceset obndy\n");
+
+        //dirichlet with rescaling (maybe not needed)
+        fprintf(fp,"fix_modify	AtC  unfix temperature all\n");
+        fprintf(fp,"fix_modify	AtC  filter off\n");
+        fprintf(fp,"fix_modify      AtC  fix temperature all 200.\n");
+        fprintf(fp,"fix_modify      AtC  fix temperature lbc 400.\n");
+        fprintf(fp,"reset_timestep  0\n");
+        fprintf(fp,"fix_modify      AtC  reset_time\n");
+        fprintf(fp,"thermo          1000\n");
+        fprintf(fp,"run             1000\n");
+
         fclose(fp);
 
-        _lmp->input->file("in.fix_initial_temperature");
+        _lmp->input->file("in.equilibriate_atc");
     }
 }
 
 void
-moose_callback(int nlocal)
+LammpsUserObject::set_atc_parameters()
 {
+    if (_mpiRank == 0)
+    {
+        char str[128];
+        FILE *fp = fopen("in.set_atc_params","w");
+
+        fprintf(fp,"fix_modify      AtC  unfix temperature all\n");
+        fprintf(fp,"fix_modify      AtC  control thermal flux no_boundary\n");
+        fprintf(fp,"fix_modify      AtC  control localized_lambda on\n");
+        fprintf(fp,"fix_modify      AtC  control thermal flux interpolate\n");
+        fprintf(fp,"fix_modify      AtC  control thermal hoover\n");
+        fprintf(fp,"fix_modify      AtC  control tolerance 1.e-14\n");
+
+        fclose(fp);
+
+        _lmp->input->file("in.set_atc_params");
+    }
+}
+
+void
+LammpsUserObject::get_nodeset(std::set<int>& nSetVec)
+{
+    // Reference the the libMesh::MeshBase
+    MeshBase & mesh = _atc_mesh->getMesh();
+    SubdomainID block_id = _atc_mesh->getSubdomainID(_atc_block_name);
+
+    // Loop over the elements
+    MeshBase::const_element_iterator   el  = mesh.active_elements_begin();
+    const MeshBase::const_element_iterator end_el = mesh.active_elements_end();
+    for (; el != end_el ; ++el)
+    {
+      const Elem* elem = *el;
+      SubdomainID curr_subdomain = elem->subdomain_id();
+
+      // We only need to loop over elements in the source subdomain
+      if (curr_subdomain != block_id)
+        continue;
+
+      for (unsigned int j=0; j<elem->n_nodes(); j++)
+      {
+        const Node* node = elem->get_node(j);
+        //nSetVec.push_back(node->unique_id());
+        nSetVec.insert(node->unique_id());
+      }
+    }
+
+
+    //std::copy(nodeset.begin(), nodeset.end(), nSetVec.begin());
 
 }
+
+void*
+LammpsUserObject::moose_callback(int index)
+{
+    void* returnValue;
+    // If the mesh pointer is not defined, but FEProblem is, get it from there
+    if (_blk_feproblem != NULL && _atc_mesh == NULL)
+      _atc_mesh = &_blk_feproblem->mesh();
+
+    if (!_atc_mesh)
+      mooseError("_mesh_ptr must be initialized before calling LammpsUserObject::moose_callback()!");
+
+    switch (index) {
+    case 1://number of elements
+        {
+            returnValue = (void*)_atc_mesh->nElem();
+        }
+        break;
+    case 2://number of nodes
+        {
+            returnValue = (void*)_atc_mesh->nNodes();
+        }
+        break;
+    case 3://nodeset
+        {
+            std::set<int> val;
+            get_nodeset(val);
+            returnValue = (void*)(&val);
+        }
+        break;
+    case 4://num_nodes_per_element
+        {
+            returnValue = (void*)(_assembly.elem()->n_nodes());
+        }
+        break;
+    case 5://num_ips_per_element
+        {
+            returnValue = (void*)(_assembly.qPoints().size());
+        }
+        break;
+    case 6://num_ips_per_face
+        {
+            if(_assembly.elem()->n_faces() > 0)
+            {
+                returnValue = (void*)_assembly.qRuleFace()->n_points();
+            }
+            else
+            {
+                returnValue = (void*)0;
+            }
+        }
+        break;
+    case 7://num_spatial_dimensions
+        {
+            returnValue = (void*)_atc_mesh->dimension();
+        }
+        break;
+    case 8://num_elements
+        {
+            returnValue = (void*)_atc_mesh->nElem();
+        }
+        break;
+    case 9://num_nodes
+        {
+            //returnValue = (void*)_atc_mesh->nUniqueNodes();
+        }
+        break;
+    default:
+        break;
+    }
+
+    return returnValue;
+}
+
+void*
+LammpsUserObject::moose_callback_wrapper(void* lmpUoPtr, int nlocal)
+{
+    LammpsUserObject* lmpUo = (LammpsUserObject*)lmpUoPtr;
+    return lmpUo->moose_callback(nlocal);
+}
+
 
 void
 LammpsUserObject::add_atc_fix()
@@ -122,13 +315,8 @@ LammpsUserObject::add_atc_fix()
     {
         char str[128];
         FILE *fp = fopen("in.add_atc_fix","w");
-        //if (fp == NULL) error->one("Could not create LAMMPS input script");
 
-        sprintf(str,"fix AtC internal    atc thermal %s\n","Ar_thermal.mat");
-        fprintf(fp,"%s",str);
         fprintf(fp,"fix AtC internal    atc thermal Ar_thermal.mat\n");
-        fprintf(fp,"fix_modify      AtC boundary ghost\n");
-        fprintf(fp,"fix_modify      AtC time_integration fractional_step\n");
 
         fclose(fp);
 
@@ -141,7 +329,7 @@ LammpsUserObject::add_atc_fix()
 
         int ifix = _lmp->modify->find_fix("AtC");
         FixATC *fix = (FixATC *) _lmp->modify->fix[ifix];
-        fix->set_callback(&moose_callback);
+        fix->set_callback((void*)this, &moose_callback_wrapper);
     }
 }
 
@@ -155,47 +343,6 @@ LammpsUserObject::initialize_lammps()
     _lmp = new LAMMPS(0,NULL,MPI_COMM_WORLD);
 }
 
-void
-LammpsUserObject::equilibriate_md()
-{
-    FILE *fp;
-    int nprocs;
-    MPI_Comm_rank(MPI_COMM_WORLD,&_mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-    //printf("_mpiRank %d   nprocs %d\n",_mpiRank,nprocs);
-
-    // open LAMMPS input script
-    if (_mpiRank == 0)
-    {
-      fp = fopen(_inputEqFilePath.c_str(),"r");
-      if (fp == NULL)
-      {
-        printf("ERROR: Could not open LAMMPS input script\n");
-        MPI_Abort(MPI_COMM_WORLD,1);
-      }
-    }
-
-    int n;
-    char line[1024];
-    while (1)
-    {
-      if (_mpiRank == 0)
-      {
-        if (fgets(line,1024,fp) == NULL)
-          n = 0;
-        else
-          n = strlen(line) + 1;
-        if (n == 0)
-          fclose(fp);
-      }
-
-      MPI_Bcast(&n,1,MPI_INT,0,MPI_COMM_WORLD);
-      if (n == 0)//the other processes needs the Bcast to recieve the n == 0 value.
-        break;
-      MPI_Bcast(line,n,MPI_CHAR,0,MPI_COMM_WORLD);
-      _lmp->input->one(line);
-    }
-}
 
 Real
 LammpsUserObject::getNodalAtomicTemperature(const Node & refNode) const

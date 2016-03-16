@@ -3,6 +3,7 @@
 #include "GeckoApp.h"
 #include "Moose.h"
 #include "AppFactory.h"
+#include "MooseSyntax.h"
 
 // Gecko incluces
 #include "MultiscaleDirichletBC.h"
